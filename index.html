@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOMAD LOG</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Teko:wght@300;400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<style>
+  :root {
+    --bg: #0d0f0e;
+    --surface: #141816;
+    --surface2: #1c201d;
+    --border: #2a2f2b;
+    --accent: #7fff6e;
+    --accent2: #ff6b35;
+    --accent3: #4ecdc4;
+    --text: #d4d9d5;
+    --text-dim: #6b7a6d;
+    --text-bright: #edf2ee;
+    --danger: #ff4757;
+    --warn: #ffa502;
+    --good: #7fff6e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Teko', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-shadow: 0 0 20px rgba(127,255,110,0.3);
+  }
+
+  .logo span { color: var(--text-dim); font-weight: 300; }
+
+  .header-meta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  /* NAV TABS */
+  .nav-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    background: var(--surface);
+    gap: 0;
+  }
+
+  .nav-tab {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.85rem 1.5rem;
+    cursor: pointer;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* SECTION HEADERS */
+  .section-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* CARDS */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-family: 'Teko', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: var(--text-bright);
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+
+  /* FORM ELEMENTS */
+  input[type="text"], input[type="date"], textarea, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 300;
+    padding: 0.6rem 0.9rem;
+    border-radius: 2px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  input[type="text"]:focus,
+  input[type="date"]:focus,
+  textarea:focus,
+  select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(127,255,110,0.08);
+  }
+
+  textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+  label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  .field { margin-bottom: 1.1rem; }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.1rem;
+  }
+
+  @media (max-width: 600px) { .field-row { grid-template-columns: 1fr; } }
+
+  /* STAR RATING */
+  .star-rating {
+    display: flex;
+    gap: 0.3rem;
+    margin-top: 0.2rem;
+  }
+
+  .star {
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: var(--border);
+    transition: color 0.1s, transform 0.1s;
+    line-height: 1;
+  }
+
+  .star:hover, .star.active { color: var(--accent); transform: scale(1.1); }
+
+  /* TAGS */
+  .tags-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.3rem;
+  }
+
+  .tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.12s;
+    user-select: none;
+    color: var(--text-dim);
+    background: var(--surface2);
+  }
+
+  .tag:hover { border-color: var(--text-dim); color: var(--text); }
+  .tag.selected-pos { border-color: var(--good); color: var(--good); background: rgba(127,255,110,0.06); }
+  .tag.selected-neg { border-color: var(--danger); color: var(--danger); background: rgba(255,71,87,0.06); }
+  .tag.selected-neu { border-color: var(--accent3); color: var(--accent3); background: rgba(78,205,196,0.06); }
+
+  /* BUTTONS */
+  .btn {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.65rem 1.4rem;
+    border: 1px solid;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: none;
+  }
+
+  .btn-primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-primary:hover {
+    background: var(--accent);
+    color: var(--bg);
+  }
+
+  .btn-danger {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+
+  .btn-ghost {
+    border-color: var(--border);
+    color: var(--text-dim);
+  }
+  .btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+
+  .btn-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  /* ENTRIES LIST */
+  .entry-list { margin-top: 1.5rem; }
+
+  .entry-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--border);
+    border-radius: 2px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.6rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .entry-item:hover { border-left-color: var(--accent); background: var(--surface2); }
+  .entry-item.rating-5 { border-left-color: var(--good); }
+  .entry-item.rating-4 { border-left-color: #a8ff78; }
+  .entry-item.rating-3 { border-left-color: var(--warn); }
+  .entry-item.rating-2 { border-left-color: var(--accent2); }
+  .entry-item.rating-1 { border-left-color: var(--danger); }
+
+  .entry-title {
+    font-family: 'Teko', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    color: var(--text-bright);
+    letter-spacing: 0.04em;
+  }
+
+  .entry-meta {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 0.2rem;
+  }
+
+  .entry-tags-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-top: 0.5rem;
+  }
+
+  .entry-tag-pill {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  .pill-pos { background: rgba(127,255,110,0.12); color: var(--good); }
+  .pill-neg { background: rgba(255,71,87,0.12); color: var(--danger); }
+  .pill-neu { background: rgba(78,205,196,0.12); color: var(--accent3); }
+
+  .entry-stars {
+    font-size: 0.85rem;
+    color: var(--accent);
+    white-space: nowrap;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* MODAL / DETAIL VIEW */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 2rem;
+  }
+
+  .modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    width: 100%;
+    max-width: 700px;
+    padding: 2rem;
+    position: relative;
+    margin: auto;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.6rem;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+  }
+
+  .modal-close:hover { color: var(--text); border-color: var(--text-dim); }
+
+  /* YOUTUBE CHECKLIST */
+  .yt-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .yt-section-title {
+    font-family: 'Teko', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: var(--accent2);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .yt-progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .yt-progress-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--surface2);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item.checked { opacity: 0.5; }
+
+  .check-box {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.12s;
+    font-size: 0.65rem;
+    color: var(--bg);
+  }
+
+  .checklist-item.checked .check-box {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  .check-label {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .check-sublabel {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    margin-top: 0.15rem;
+  }
+
+  .checklist-item.checked .check-label { text-decoration: line-through; color: var(--text-dim); }
+
+  /* STATUS BADGE */
+  .status-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+    margin-right: 0.3rem;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* STATS GRID */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-family: 'Teko', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+    text-shadow: 0 0 15px rgba(127,255,110,0.2);
+  }
+
+  .stat-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+  }
+
+  /* NOTICE */
+  .notice {
+    background: rgba(127,255,110,0.04);
+    border: 1px solid rgba(127,255,110,0.15);
+    border-radius: 2px;
+    padding: 0.75rem 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .notice strong { color: var(--accent); font-weight: normal; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    padding: 0.7rem 1.2rem;
+    border-radius: 2px;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.2s;
+    pointer-events: none;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-dim);
+  }
+
+  .empty-state .big { font-family: 'Teko', sans-serif; font-size: 3rem; color: var(--border); }
+  .empty-state p { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; margin-top: 0.5rem; }
+
+  /* SEARCH */
+  .search-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .search-row input { flex: 1; }
+
+  /* DETAIL VIEW specifics */
+  .detail-notes {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent3);
+    padding: 1rem;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .detail-yt-summary {
+    background: var(--surface2);
+    border-left: 3px solid var(--accent2);
+    padding: 1rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.7rem;
+    line-height: 1.8;
+    border-radius: 0 2px 2px 0;
+  }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-dim); }
+
+  select option { background: var(--surface2); }
+
+  .filter-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .filter-tag {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.65rem;
+    padding: 0.25rem 0.6rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.12s;
+  }
+  .filter-tag.active { border-color: var(--accent); color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NOMAD<span>LOG</span></div>
+  <div class="header-meta">
+    <span class="status-dot"></span>LOCAL STORAGE ACTIVE<br>
+    <span id="header-date"></span>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" data-panel="log">◈ LOG ENTRY</button>
+  <button class="nav-tab" data-panel="youtube">▶ YT CHECKLIST</button>
+  <button class="nav-tab" data-panel="journal">◉ JOURNAL</button>
+  <button class="nav-tab" data-panel="stats">⬡ STATS</button>
+</nav>
+
+<div class="main">
+
+  <!-- ============ PANEL: LOG ENTRY ============ -->
+  <div class="panel active" id="panel-log">
+
+    <div class="notice">
+      <strong>// ENTRY MODE</strong> — Fill in what you can. Nothing is required. Tags help you pattern-match later. Stars are gut-feel only.
+    </div>
+
+    <div class="card">
+      <div class="section-label">Location</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Spot Name / Nickname</label>
+          <input type="text" id="loc-name" placeholder="e.g. Walmart on Pavilion, Church lot off 85...">
+        </div>
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="log-date">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>General Area</label>
+          <input type="text" id="loc-area" placeholder="City, state, or region">
+        </div>
+        <div class="field">
+          <label>Spot Type</label>
+          <select id="spot-type">
+            <option value="">— select —</option>
+            <option>Walmart / Big Box Lot</option>
+            <option>Church Lot</option>
+            <option>Hospital / Medical</option>
+            <option>Cracker Barrel</option>
+            <option>Dispersed / Forest</option>
+            <option>Rest Stop</option>
+            <option>Neighborhood Street</option>
+            <option>Industrial Area</option>
+            <option>Campground / RV Park</option>
+            <option>Trailhead</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Rating</div>
+      <label>Overall Vibe — how'd it go?</label>
+      <div class="star-rating" id="star-rating">
+        <span class="star" data-val="1">★</span>
+        <span class="star" data-val="2">★</span>
+        <span class="star" data-val="3">★</span>
+        <span class="star" data-val="4">★</span>
+        <span class="star" data-val="5">★</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Tags — click to toggle</div>
+
+      <div class="field">
+        <label>✓ Positive</label>
+        <div class="tags-grid" id="tags-pos">
+          <span class="tag" data-type="pos">quiet</span>
+          <span class="tag" data-type="pos">dark</span>
+          <span class="tag" data-type="pos">safe feeling</span>
+          <span class="tag" data-type="pos">good airflow</span>
+          <span class="tag" data-type="pos">no foot traffic</span>
+          <span class="tag" data-type="pos">no car traffic</span>
+          <span class="tag" data-type="pos">near bathroom</span>
+          <span class="tag" data-type="pos">level ground</span>
+          <span class="tag" data-type="pos">good wifi nearby</span>
+          <span class="tag" data-type="pos">cell signal</span>
+          <span class="tag" data-type="pos">slept well</span>
+          <span class="tag" data-type="pos">cat settled</span>
+          <span class="tag" data-type="pos">good solar spot</span>
+          <span class="tag" data-type="pos">low scrutiny</span>
+          <span class="tag" data-type="pos">would return</span>
+          <span class="tag" data-type="pos">near water</span>
+          <span class="tag" data-type="pos">scenic</span>
+          <span class="tag" data-type="pos">dispersed camping</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>✗ Negative</label>
+        <div class="tags-grid" id="tags-neg">
+          <span class="tag" data-type="neg">light pollution</span>
+          <span class="tag" data-type="neg">noisy</span>
+          <span class="tag" data-type="neg">security patrol</span>
+          <span class="tag" data-type="neg">knocked on</span>
+          <span class="tag" data-type="neg">had to move</span>
+          <span class="tag" data-type="neg">sketchy area</span>
+          <span class="tag" data-type="neg">uneven ground</span>
+          <span class="tag" data-type="neg">too hot</span>
+          <span class="tag" data-type="neg">too cold</span>
+          <span class="tag" data-type="neg">condensation bad</span>
+          <span class="tag" data-type="neg">cat stressed</span>
+          <span class="tag" data-type="neg">cat got sick</span>
+          <span class="tag" data-type="neg">poor sleep</span>
+          <span class="tag" data-type="neg">traffic noise</span>
+          <span class="tag" data-type="neg">no signal</span>
+          <span class="tag" data-type="neg">posted no overnight</span>
+          <span class="tag" data-type="neg">people nearby</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>◈ Neutral / Conditions</label>
+        <div class="tags-grid" id="tags-neu">
+          <span class="tag" data-type="neu">clear night</span>
+          <span class="tag" data-type="neu">rain</span>
+          <span class="tag" data-type="neu">overcast</span>
+          <span class="tag" data-type="neu">cold</span>
+          <span class="tag" data-type="neu">mild</span>
+          <span class="tag" data-type="neu">warm</span>
+          <span class="tag" data-type="neu">hot</span>
+          <span class="tag" data-type="neu">windy</span>
+          <span class="tag" data-type="neu">weeknight</span>
+          <span class="tag" data-type="neu">weekend</span>
+          <span class="tag" data-type="neu">filmed here</span>
+          <span class="tag" data-type="neu">first visit</span>
+          <span class="tag" data-type="neu">repeat spot</span>
+          <span class="tag" data-type="neu">used fan</span>
+          <span class="tag" data-type="neu">low battery</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Notes</div>
+      <div class="field">
+        <label>Freeform — anything worth remembering</label>
+        <textarea id="log-notes" placeholder="What happened, how the cat did, power situation, what you'd do differently, visual notes for video..."></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="save-entry">SAVE ENTRY</button>
+      <button class="btn btn-ghost" id="clear-form">CLEAR</button>
+    </div>
+
+  </div><!-- end panel-log -->
+
+
+  <!-- ============ PANEL: YOUTUBE ============ -->
+  <div class="panel" id="panel-youtube">
+
+    <div class="notice">
+      <strong>// YOUTUBE SHOT LIST</strong> — Check off as you film. This checklist resets each session — save your entry after to record that you filmed. Use "filmed here" tag.
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <div class="card-title" style="margin:0">PROGRESS</div>
+        <div id="yt-total-pct" style="font-family:'Teko',sans-serif;font-size:1.6rem;color:var(--accent2);">0%</div>
+      </div>
+      <div class="yt-progress-bar"><div class="yt-progress-fill" id="yt-master-bar" style="width:0%"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="yt-section">
+        <div class="yt-section-title">① ARRIVE &amp; SETTLE</div>
+        <div id="cl-arrive">
+          <div class="checklist-item" data-section="arrive"><div class="check-box">✓</div><div><div class="check-label">Arrival — driving into the spot</div><div class="check-sublabel">Wide exterior, dashcam-style or handheld out window</div></div></div>
+          <div class="checklist-item" data-section="arrive"><div class="check-box">✓</div><div><div class="check-label">Parking the car / choosing position</div><div class="check-sublabel">Show decision-making process, orient audience to space</div></div></div>
+          <div class="checklist-item" data-section="arrive"><div class="check-box">✓</div><div><div class="check-label">Exterior establishing shot — surroundings</div><div class="check-sublabel">Show context: parking lot, street, trees, etc.</div></div></div>
+          <div class="checklist-item" data-section="arrive"><div class="check-box">✓</div><div><div class="check-label">Initial gut-feel / vibe check to camera</div><div class="check-sublabel">Talking head — does it feel safe? Quiet? First impressions.</div></div></div>
+        </div>
+      </div>
+
+      <div class="yt-section">
+        <div class="yt-section-title">② THE SETUP</div>
+        <div id="cl-setup">
+          <div class="checklist-item" data-section="setup"><div class="check-box">✓</div><div><div class="check-label">Window covers going up</div><div class="check-sublabel">Time-lapse or real-time, show the process</div></div></div>
+          <div class="checklist-item" data-section="setup"><div class="check-box">✓</div><div><div class="check-label">Bed setup / mattress roll-out</div><div class="check-sublabel">Show how the trunk transforms for sleeping</div></div></div>
+          <div class="checklist-item" data-section="setup"><div class="check-box">✓</div><div><div class="check-label">Litter box and cat setup</div><div class="check-sublabel">Where it goes, cat's reaction — good viewer hook</div></div></div>
+          <div class="checklist-item" data-section="setup"><div class="check-box">✓</div><div><div class="check-label">Power — solar panel, Bluetti status</div><div class="check-sublabel">Show the setup, current battery %, charging situation</div></div></div>
+          <div class="checklist-item" data-section="setup"><div class="check-box">✓</div><div><div class="check-label">Dinner / cooking</div><div class="check-sublabel">Rice cooker, kettle — real moment, not staged</div></div></div>
+        </div>
+      </div>
+
+      <div class="yt-section">
+        <div class="yt-section-title">③ STORY / CONTEXT</div>
+        <div id="cl-story">
+          <div class="checklist-item" data-section="story"><div class="check-box">✓</div><div><div class="check-label">Talking head — why this spot, what the plan is</div><div class="check-sublabel">2–3 min of personality. This is why people subscribe.</div></div></div>
+          <div class="checklist-item" data-section="story"><div class="check-box">✓</div><div><div class="check-label">Cat content — being cute, eating, settling in</div><div class="check-sublabel">17yo calico is a massive viewer draw. At least 30 sec raw.</div></div></div>
+          <div class="checklist-item" data-section="story"><div class="check-box">✓</div><div><div class="check-label">B-roll of your space / interior life</div><div class="check-sublabel">Phone charging, working on laptop, eating, reading — slice of life</div></div></div>
+          <div class="checklist-item" data-section="story"><div class="check-box">✓</div><div><div class="check-label">Any challenge or unexpected moment</div><div class="check-sublabel">Security, cat being difficult, power issue — conflict = engagement</div></div></div>
+          <div class="checklist-item" data-section="story"><div class="check-box">✓</div><div><div class="check-label">Night exterior if safe — ambiance shot</div><div class="check-sublabel">Parking lot at night, stars if dispersed, shows the reality</div></div></div>
+        </div>
+      </div>
+
+      <div class="yt-section">
+        <div class="yt-section-title">④ MORNING / TEARDOWN</div>
+        <div id="cl-morning">
+          <div class="checklist-item" data-section="morning"><div class="check-box">✓</div><div><div class="check-label">Morning light shot — interior glow through covers</div><div class="check-sublabel">Aesthetic. Gets clipped. Film before removing covers.</div></div></div>
+          <div class="checklist-item" data-section="morning"><div class="check-box">✓</div><div><div class="check-label">Covers coming down / transition to day mode</div><div class="check-sublabel">Reverse of setup — shows the full routine</div></div></div>
+          <div class="checklist-item" data-section="morning"><div class="check-box">✓</div><div><div class="check-label">Morning reflection to camera</div><div class="check-sublabel">How'd it go? Rate the night. Honest take.</div></div></div>
+          <div class="checklist-item" data-section="morning"><div class="check-box">✓</div><div><div class="check-label">Driving out shot</div><div class="check-sublabel">Bookend with arrival. Satisfying edit loop.</div></div></div>
+        </div>
+      </div>
+
+      <div class="yt-section">
+        <div class="yt-section-title">⑤ PRODUCTION CHECKLIST</div>
+        <div id="cl-prod">
+          <div class="checklist-item" data-section="prod"><div class="check-box">✓</div><div><div class="check-label">Hook shot filmed — first 15 seconds planned</div><div class="check-sublabel">What's the "wait, what is she doing?" moment?</div></div></div>
+          <div class="checklist-item" data-section="prod"><div class="check-box">✓</div><div><div class="check-label">Thumbnail moment captured</div><div class="check-sublabel">Face in frame with clear emotion, or striking exterior shot</div></div></div>
+          <div class="checklist-item" data-section="prod"><div class="check-box">✓</div><div><div class="check-label">End card / call to action filmed</div><div class="check-sublabel">"Subscribe if you want to see how this goes" — personal, not cringe</div></div></div>
+          <div class="checklist-item" data-section="prod"><div class="check-box">✓</div><div><div class="check-label">Audio check — ambient noise noted</div><div class="check-sublabel">Will it need music bed in edit? Note conditions now.</div></div></div>
+          <div class="checklist-item" data-section="prod"><div class="check-box">✓</div><div><div class="check-label">Backup footage — anything filmed twice</div><div class="check-sublabel">One bad clip can ruin a sequence. Shoot setup twice if possible.</div></div></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="yt-reset">RESET CHECKLIST</button>
+      </div>
+    </div>
+
+  </div><!-- end panel-youtube -->
+
+
+  <!-- ============ PANEL: JOURNAL ============ -->
+  <div class="panel" id="panel-journal">
+
+    <div class="search-row">
+      <input type="text" id="search-input" placeholder="Search locations, notes, tags...">
+      <select id="filter-rating" style="width:auto;min-width:130px;">
+        <option value="">All ratings</option>
+        <option value="5">★★★★★</option>
+        <option value="4">★★★★</option>
+        <option value="3">★★★</option>
+        <option value="2">★★</option>
+        <option value="1">★</option>
+      </select>
+    </div>
+
+    <div class="filter-row" id="filter-tags"></div>
+
+    <div id="journal-entries">
+      <div class="empty-state">
+        <div class="big">EMPTY LOG</div>
+        <p>No entries yet — start documenting your nights</p>
+      </div>
+    </div>
+
+  </div><!-- end panel-journal -->
+
+
+  <!-- ============ PANEL: STATS ============ -->
+  <div class="panel" id="panel-stats">
+
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card"><div class="stat-value" id="s-total">0</div><div class="stat-label">Total Nights</div></div>
+      <div class="stat-card"><div class="stat-value" id="s-avg">—</div><div class="stat-label">Avg Rating</div></div>
+      <div class="stat-card"><div class="stat-value" id="s-best">—</div><div class="stat-label">5★ Spots</div></div>
+      <div class="stat-card"><div class="stat-value" id="s-filmed">0</div><div class="stat-label">Nights Filmed</div></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Top Positive Tags</div>
+      <div class="tags-grid" id="stats-pos-tags"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Top Negative Tags</div>
+      <div class="tags-grid" id="stats-neg-tags"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Spot Types</div>
+      <div id="stats-types" style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;line-height:2.2;color:var(--text-dim);"></div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;">
+      <div class="section-label">Data</div>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn btn-ghost" id="export-btn">EXPORT JSON</button>
+        <button class="btn btn-danger" id="nuke-btn">CLEAR ALL DATA</button>
+      </div>
+    </div>
+
+  </div><!-- end panel-stats -->
+
+</div><!-- end main -->
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-content">
+    <button class="modal-close" id="modal-close-btn">✕ CLOSE</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast">SAVED</div>
+
+<script>
+$(function() {
+
+  // ─── STATE ──────────────────────────────────────────────────────────────────
+  let entries = JSON.parse(localStorage.getItem('nomadlog_entries') || '[]');
+  let ytChecks = JSON.parse(localStorage.getItem('nomadlog_yt') || '{}');
+  let currentRating = 0;
+  let selectedTags = { pos: [], neg: [], neu: [] };
+
+  // ─── INIT ────────────────────────────────────────────────────────────────────
+  $('#header-date').text(new Date().toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }));
+  $('#log-date').val(new Date().toISOString().split('T')[0]);
+  initYTChecks();
+  renderJournal();
+  renderStats();
+
+  // ─── TABS ────────────────────────────────────────────────────────────────────
+  $('.nav-tab').on('click', function() {
+    const panel = $(this).data('panel');
+    $('.nav-tab').removeClass('active');
+    $(this).addClass('active');
+    $('.panel').removeClass('active');
+    $('#panel-' + panel).addClass('active');
+    if (panel === 'journal') renderJournal();
+    if (panel === 'stats') renderStats();
+  });
+
+  // ─── STAR RATING ─────────────────────────────────────────────────────────────
+  $('#star-rating .star').on('click', function() {
+    currentRating = parseInt($(this).data('val'));
+    updateStars();
+  });
+
+  $('#star-rating .star').on('mouseenter', function() {
+    const val = parseInt($(this).data('val'));
+    $('#star-rating .star').each(function() {
+      $(this).toggleClass('active', parseInt($(this).data('val')) <= val);
+    });
+  });
+
+  $('#star-rating').on('mouseleave', function() { updateStars(); });
+
+  function updateStars() {
+    $('#star-rating .star').each(function() {
+      $(this).toggleClass('active', parseInt($(this).data('val')) <= currentRating);
+    });
+  }
+
+  // ─── TAGS ─────────────────────────────────────────────────────────────────────
+  $('.tag').on('click', function() {
+    const type = $(this).data('type');
+    const text = $(this).text().trim();
+    if ($(this).hasClass('selected-' + type)) {
+      $(this).removeClass('selected-' + type);
+      selectedTags[type] = selectedTags[type].filter(t => t !== text);
+    } else {
+      $(this).addClass('selected-' + type);
+      selectedTags[type].push(text);
+    }
+  });
+
+  // ─── SAVE ENTRY ──────────────────────────────────────────────────────────────
+  $('#save-entry').on('click', function() {
+    const name = $('#loc-name').val().trim() || 'Unnamed Spot';
+    const entry = {
+      id: Date.now(),
+      date: $('#log-date').val() || new Date().toISOString().split('T')[0],
+      name,
+      area: $('#loc-area').val().trim(),
+      type: $('#spot-type').val(),
+      rating: currentRating,
+      tags: { ...selectedTags },
+      notes: $('#log-notes').val().trim(),
+    };
+    entries.unshift(entry);
+    localStorage.setItem('nomadlog_entries', JSON.stringify(entries));
+    toast('ENTRY SAVED');
+    clearForm();
+    renderJournal();
+  });
+
+  $('#clear-form').on('click', clearForm);
+
+  function clearForm() {
+    $('#loc-name, #loc-area, #log-notes').val('');
+    $('#spot-type').val('');
+    $('#log-date').val(new Date().toISOString().split('T')[0]);
+    currentRating = 0;
+    selectedTags = { pos: [], neg: [], neu: [] };
+    updateStars();
+    $('.tag').removeClass('selected-pos selected-neg selected-neu');
+  }
+
+  // ─── YOUTUBE CHECKLIST ────────────────────────────────────────────────────────
+  function initYTChecks() {
+    $('.checklist-item').each(function(i) {
+      const id = 'yt_' + i;
+      $(this).data('ytid', id);
+      if (ytChecks[id]) $(this).addClass('checked');
+    });
+    updateYTProgress();
+  }
+
+  $(document).on('click', '.checklist-item', function() {
+    const id = $(this).data('ytid');
+    $(this).toggleClass('checked');
+    ytChecks[id] = $(this).hasClass('checked');
+    localStorage.setItem('nomadlog_yt', JSON.stringify(ytChecks));
+    updateYTProgress();
+  });
+
+  function updateYTProgress() {
+    const total = $('.checklist-item').length;
+    const done = $('.checklist-item.checked').length;
+    const pct = total ? Math.round(done / total * 100) : 0;
+    $('#yt-master-bar').css('width', pct + '%');
+    $('#yt-total-pct').text(pct + '%');
+  }
+
+  $('#yt-reset').on('click', function() {
+    ytChecks = {};
+    localStorage.setItem('nomadlog_yt', '{}');
+    $('.checklist-item').removeClass('checked');
+    updateYTProgress();
+    toast('CHECKLIST RESET');
+  });
+
+  // ─── JOURNAL ─────────────────────────────────────────────────────────────────
+  function renderJournal() {
+    const search = ($('#search-input').val() || '').toLowerCase();
+    const ratingFilter = $('#filter-rating').val();
+
+    let filtered = entries.filter(e => {
+      const matchSearch = !search ||
+        e.name.toLowerCase().includes(search) ||
+        (e.area || '').toLowerCase().includes(search) ||
+        (e.notes || '').toLowerCase().includes(search) ||
+        [...(e.tags.pos || []), ...(e.tags.neg || []), ...(e.tags.neu || [])].some(t => t.includes(search));
+      const matchRating = !ratingFilter || String(e.rating) === ratingFilter;
+      return matchSearch && matchRating;
+    });
+
+    if (!filtered.length) {
+      $('#journal-entries').html('<div class="empty-state"><div class="big">' +
+        (entries.length ? 'NO MATCH' : 'EMPTY LOG') + '</div><p>' +
+        (entries.length ? 'Try different search or filters' : 'No entries yet — start documenting your nights') +
+        '</p></div>');
+      return;
+    }
+
+    let html = '';
+    filtered.forEach(e => {
+      const stars = e.rating ? '★'.repeat(e.rating) + '☆'.repeat(5 - e.rating) : '—';
+      const allTags = [
+        ...(e.tags.pos || []).map(t => `<span class="entry-tag-pill pill-pos">${t}</span>`),
+        ...(e.tags.neg || []).map(t => `<span class="entry-tag-pill pill-neg">${t}</span>`),
+        ...(e.tags.neu || []).map(t => `<span class="entry-tag-pill pill-neu">${t}</span>`),
+      ].join('');
+
+      html += `<div class="entry-item rating-${e.rating}" data-id="${e.id}">
+        <div>
+          <div class="entry-title">${escHtml(e.name)}</div>
+          <div class="entry-meta">${e.date}${e.area ? ' · ' + escHtml(e.area) : ''}${e.type ? ' · ' + escHtml(e.type) : ''}</div>
+          ${allTags ? '<div class="entry-tags-preview">' + allTags + '</div>' : ''}
+          ${e.notes ? '<div style="font-size:0.8rem;color:var(--text-dim);margin-top:0.4rem;">' + escHtml(e.notes.substring(0, 100)) + (e.notes.length > 100 ? '…' : '') + '</div>' : ''}
+        </div>
+        <div class="entry-stars">${stars}</div>
+      </div>`;
+    });
+
+    $('#journal-entries').html(html);
+  }
+
+  $('#search-input').on('input', renderJournal);
+  $('#filter-rating').on('change', renderJournal);
+
+  $(document).on('click', '.entry-item', function() {
+    const id = parseInt($(this).data('id'));
+    const e = entries.find(x => x.id === id);
+    if (!e) return;
+    showDetail(e);
+  });
+
+  function showDetail(e) {
+    const stars = e.rating ? '★'.repeat(e.rating) + '☆'.repeat(5 - e.rating) : 'Unrated';
+    const pos = (e.tags.pos || []).map(t => `<span class="entry-tag-pill pill-pos" style="padding:.25rem .6rem;">${t}</span>`).join(' ');
+    const neg = (e.tags.neg || []).map(t => `<span class="entry-tag-pill pill-neg" style="padding:.25rem .6rem;">${t}</span>`).join(' ');
+    const neu = (e.tags.neu || []).map(t => `<span class="entry-tag-pill pill-neu" style="padding:.25rem .6rem;">${t}</span>`).join(' ');
+
+    let html = `
+      <div class="card-title" style="font-size:1.8rem;margin-bottom:0.3rem;">${escHtml(e.name)}</div>
+      <div class="entry-meta" style="margin-bottom:1rem;">${e.date}${e.area ? ' · ' + escHtml(e.area) : ''}${e.type ? ' · ' + escHtml(e.type) : ''}</div>
+      <div style="font-size:1.3rem;color:var(--accent);margin-bottom:1.25rem;letter-spacing:0.05em;">${stars}</div>`;
+
+    if (pos || neg || neu) {
+      html += `<div style="margin-bottom:1.25rem;display:flex;flex-wrap:wrap;gap:.4rem;">${pos}${neg}${neu}</div>`;
+    }
+
+    if (e.notes) {
+      html += `<div class="section-label" style="margin-bottom:.5rem;">Notes</div>
+        <div class="detail-notes">${escHtml(e.notes)}</div>`;
+    }
+
+    html += `<hr>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1rem;">
+        <button class="btn btn-danger btn-delete" data-id="${e.id}">DELETE ENTRY</button>
+      </div>`;
+
+    $('#modal-body').html(html);
+    $('#modal-overlay').addClass('open');
+  }
+
+  $(document).on('click', '.btn-delete', function() {
+    const id = parseInt($(this).data('id'));
+    if (!confirm('Delete this entry?')) return;
+    entries = entries.filter(e => e.id !== id);
+    localStorage.setItem('nomadlog_entries', JSON.stringify(entries));
+    $('#modal-overlay').removeClass('open');
+    renderJournal();
+    renderStats();
+    toast('ENTRY DELETED');
+  });
+
+  $('#modal-close-btn').on('click', function() { $('#modal-overlay').removeClass('open'); });
+  $('#modal-overlay').on('click', function(e) {
+    if ($(e.target).is('#modal-overlay')) $('#modal-overlay').removeClass('open');
+  });
+
+  // ─── STATS ───────────────────────────────────────────────────────────────────
+  function renderStats() {
+    const n = entries.length;
+    $('#s-total').text(n);
+
+    if (n) {
+      const rated = entries.filter(e => e.rating > 0);
+      const avg = rated.length ? (rated.reduce((a, e) => a + e.rating, 0) / rated.length).toFixed(1) : '—';
+      $('#s-avg').text(avg);
+      $('#s-best').text(entries.filter(e => e.rating === 5).length);
+      $('#s-filmed').text(entries.filter(e => (e.tags.neu || []).includes('filmed here')).length);
+
+      const posCount = {}, negCount = {};
+      entries.forEach(e => {
+        (e.tags.pos || []).forEach(t => posCount[t] = (posCount[t] || 0) + 1);
+        (e.tags.neg || []).forEach(t => negCount[t] = (negCount[t] || 0) + 1);
+      });
+
+      const topPos = Object.entries(posCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+      const topNeg = Object.entries(negCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+      $('#stats-pos-tags').html(topPos.map(([t,c]) =>
+        `<span class="entry-tag-pill pill-pos" style="padding:.3rem .7rem;font-size:.7rem;">${t} <strong>${c}</strong></span>`).join(''));
+      $('#stats-neg-tags').html(topNeg.map(([t,c]) =>
+        `<span class="entry-tag-pill pill-neg" style="padding:.3rem .7rem;font-size:.7rem;">${t} <strong>${c}</strong></span>`).join(''));
+
+      const types = {};
+      entries.forEach(e => { if (e.type) types[e.type] = (types[e.type] || 0) + 1; });
+      const typeHtml = Object.entries(types).sort((a,b)=>b[1]-a[1])
+        .map(([t,c]) => `<span style="color:var(--text-dim);">${t}</span> <span style="color:var(--accent);">${c}x</span><br>`).join('');
+      $('#stats-types').html(typeHtml || '<span style="color:var(--border);">No spot types recorded yet</span>');
+    } else {
+      $('#s-avg, #s-best').text('—');
+      $('#stats-pos-tags, #stats-neg-tags, #stats-types').html('<span style="color:var(--border);font-family:\'Share Tech Mono\',monospace;font-size:.7rem;">No data yet</span>');
+    }
+  }
+
+  // ─── EXPORT ───────────────────────────────────────────────────────────────────
+  $('#export-btn').on('click', function() {
+    const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'nomadlog_export_' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+  });
+
+  $('#nuke-btn').on('click', function() {
+    if (!confirm('Delete ALL entries permanently? This cannot be undone.')) return;
+    entries = [];
+    localStorage.removeItem('nomadlog_entries');
+    renderJournal();
+    renderStats();
+    toast('ALL DATA CLEARED');
+  });
+
+  // ─── UTILS ───────────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toast(msg) {
+    $('#toast').text(msg).addClass('show');
+    setTimeout(() => $('#toast').removeClass('show'), 2200);
+  }
+
+});
+</script>
+</body>
+</html>
