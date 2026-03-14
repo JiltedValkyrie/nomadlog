@@ -1,0 +1,2058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LEOPARD // FINANCE SYSTEM</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<style>
+:root {
+  --bg:        #080c10;
+  --bg2:       #0d1319;
+  --bg3:       #111820;
+  --panel:     #0a1018;
+  --border:    #1a2535;
+  --vfd-cyan:  #00e8d8;
+  --vfd-blue:  #0096ff;
+  --vfd-dim:   #005f6e;
+  --vfd-off:   #0a1f22;
+  --amber:     #ffb830;
+  --amber-dim: #4a3200;
+  --red:       #ff3c3c;
+  --green:     #00ff88;
+  --green-dim: #003322;
+  --text:      #a8ccd8;
+  --text-dim:  #3a5566;
+  --text-bright: #d8eef5;
+  --gold:      #c8a84a;
+  --scanline:  rgba(0,232,216,0.03);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 400;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Scanlines */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    var(--scanline) 3px,
+    var(--scanline) 4px
+  );
+  pointer-events: none;
+  z-index: 9000;
+}
+
+/* Subtle vignette */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  z-index: 8999;
+}
+
+/* VFD glow utility */
+.vfd {
+  font-family: 'Orbitron', monospace;
+  color: var(--vfd-cyan);
+  text-shadow: 0 0 8px var(--vfd-cyan), 0 0 20px rgba(0,232,216,0.4);
+}
+.vfd-amber {
+  font-family: 'Orbitron', monospace;
+  color: var(--amber);
+  text-shadow: 0 0 8px var(--amber), 0 0 20px rgba(255,184,48,0.4);
+}
+.vfd-green {
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green), 0 0 16px rgba(0,255,136,0.3);
+}
+.vfd-red {
+  color: var(--red);
+  text-shadow: 0 0 8px var(--red), 0 0 16px rgba(255,60,60,0.3);
+}
+
+/* ── HEADER ─────────────────────────────────────────────── */
+header {
+  background: linear-gradient(180deg, #0a1520 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.5rem;
+  border-bottom: 1px solid rgba(0,232,216,0.08);
+}
+
+.logo-area {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.logo-text {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--vfd-cyan);
+  text-shadow: 0 0 15px var(--vfd-cyan), 0 0 40px rgba(0,232,216,0.3);
+  letter-spacing: 0.2em;
+}
+
+.logo-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--vfd-dim);
+  letter-spacing: 0.25em;
+}
+
+.header-readouts {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.readout {
+  text-align: right;
+}
+
+.readout-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.readout-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+/* ── CAR SVG STRIP ──────────────────────────────────────── */
+.car-strip {
+  background: linear-gradient(90deg, var(--bg) 0%, #0a1520 50%, var(--bg) 100%);
+  padding: 0.5rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  height: 90px;
+}
+
+.car-strip::before {
+  content: 'NISSAN LEOPARD F31  //  TURBO MEDALIST ULTIMA  //  VG30DET  //  255PS  //  ABUNAI DEKA  //  NISSAN LEOPARD F31  //  TURBO MEDALIST  //  1986–1992  //';
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.5rem;
+  color: var(--vfd-dim);
+  letter-spacing: 0.18em;
+  white-space: nowrap;
+  animation: marquee 25s linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(100vw); }
+  to   { transform: translateX(-200%); }
+}
+
+/* ── NAV ────────────────────────────────────────────────── */
+.nav-bar {
+  display: flex;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  padding: 0 1rem;
+}
+.nav-bar::-webkit-scrollbar { display: none; }
+
+.nav-btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.75rem 1.1rem;
+  cursor: pointer;
+  color: var(--text-dim);
+  border-bottom: 2px solid transparent;
+  background: none;
+  border-top: none; border-left: none; border-right: none;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.nav-btn:hover { color: var(--text); }
+.nav-btn.active {
+  color: var(--vfd-cyan);
+  border-bottom-color: var(--vfd-cyan);
+  text-shadow: 0 0 8px rgba(0,232,216,0.5);
+}
+
+/* ── MAIN ───────────────────────────────────────────────── */
+.main { max-width: 1200px; margin: 0 auto; padding: 1.25rem; }
+#panel-drive { position: relative; user-select: none; }
+#drive-canvas { display: block; width: 100%; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── SECTION HEADER ─────────────────────────────────────── */
+.sec-head {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--vfd-dim);
+  margin-bottom: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sec-head::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── CARDS ──────────────────────────────────────────────── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 1.1rem;
+  margin-bottom: 0.85rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--vfd-dim), transparent);
+}
+
+.card-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--vfd-cyan);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.9rem;
+  text-shadow: 0 0 8px rgba(0,232,216,0.4);
+}
+
+/* ── DASHBOARD GRID ─────────────────────────────────────── */
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.gauge-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.9rem 1rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+}
+
+.gauge-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(0,232,216,0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.gauge-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+.gauge-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.gauge-sub {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  letter-spacing: 0.1em;
+}
+
+/* Progress bar */
+.prog-wrap {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 1px;
+  height: 5px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.prog-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}
+.prog-cyan  { background: linear-gradient(90deg, var(--vfd-dim), var(--vfd-cyan)); box-shadow: 0 0 6px var(--vfd-cyan); }
+.prog-amber { background: linear-gradient(90deg, var(--amber-dim), var(--amber)); box-shadow: 0 0 6px var(--amber); }
+.prog-green { background: linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow: 0 0 6px var(--green); }
+.prog-red   { background: linear-gradient(90deg, #4a0000, var(--red)); box-shadow: 0 0 6px var(--red); }
+
+/* ── BUDGET CATEGORY ROWS ───────────────────────────────── */
+.budget-row {
+  display: grid;
+  grid-template-columns: 160px 1fr auto auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(26,37,53,0.6);
+}
+.budget-row:last-child { border-bottom: none; }
+
+@media (max-width: 680px) {
+  .budget-row { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .budget-row .prog-wrap { grid-column: 1/-1; }
+}
+
+.budget-name {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--text);
+}
+
+.budget-spent {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.budget-cap {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.budget-remaining {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-align: right;
+}
+
+/* ── FORMS ──────────────────────────────────────────────── */
+input[type="text"], input[type="number"], input[type="date"], select, textarea {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 2px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--vfd-cyan);
+  box-shadow: 0 0 0 2px rgba(0,232,216,0.08);
+}
+select option { background: var(--bg3); }
+label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+.field { margin-bottom: 0.85rem; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+@media (max-width:580px) { .field-row { grid-template-columns: 1fr; } }
+
+/* ── BUTTONS ────────────────────────────────────────────── */
+.btn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid;
+  border-radius: 2px;
+  cursor: pointer;
+  background: none;
+  transition: all 0.15s;
+}
+.btn-cyan  { border-color: var(--vfd-cyan); color: var(--vfd-cyan); }
+.btn-cyan:hover  { background: var(--vfd-cyan); color: var(--bg); box-shadow: 0 0 12px var(--vfd-cyan); }
+.btn-amber { border-color: var(--amber); color: var(--amber); }
+.btn-amber:hover { background: var(--amber); color: var(--bg); }
+.btn-red   { border-color: var(--red); color: var(--red); }
+.btn-red:hover   { background: var(--red); color: #fff; }
+.btn-ghost { border-color: var(--border); color: var(--text-dim); }
+.btn-ghost:hover { border-color: var(--text-dim); color: var(--text); }
+.btn-row { display: flex; gap: 0.65rem; flex-wrap: wrap; margin-top: 1rem; }
+
+/* ── TRANSACTIONS ───────────────────────────────────────── */
+.tx-item {
+  display: grid;
+  grid-template-columns: 90px 1fr auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(26,37,53,0.5);
+  font-size: 0.82rem;
+}
+.tx-item:last-child { border-bottom: none; }
+.tx-date { font-family: 'Share Tech Mono', monospace; font-size: 0.6rem; color: var(--text-dim); }
+.tx-cat  { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; color: var(--vfd-dim); letter-spacing: 0.08em; }
+.tx-desc { color: var(--text); }
+.tx-amt  { font-family: 'Orbitron', monospace; font-size: 0.82rem; font-weight: 700; text-align: right; }
+.tx-del  { cursor: pointer; color: var(--text-dim); font-size: 0.7rem; padding: 0 0.3rem; transition: color 0.1s; }
+.tx-del:hover { color: var(--red); }
+
+/* ── SUBSCRIPTION TOGGLE ────────────────────────────────── */
+.sub-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.sub-row:last-child { border-bottom: none; }
+.sub-name { font-size: 0.85rem; color: var(--text); }
+.sub-cost { font-family: 'Orbitron', monospace; font-size: 0.8rem; color: var(--amber); }
+
+/* Toggle switch */
+.toggle-wrap { display: flex; align-items: center; gap: 0.5rem; }
+.toggle {
+  position: relative;
+  width: 38px;
+  height: 20px;
+  cursor: pointer;
+}
+.toggle input { display: none; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  transition: all 0.2s;
+}
+.toggle input:checked ~ .toggle-track { border-color: var(--vfd-cyan); background: rgba(0,232,216,0.1); }
+.toggle input:checked ~ .toggle-thumb { left: 20px; background: var(--vfd-cyan); box-shadow: 0 0 6px var(--vfd-cyan); }
+
+/* ── RETIREMENT PROJECTOR ───────────────────────────────── */
+.proj-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.proj-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.85rem 1rem;
+}
+
+.proj-year {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  letter-spacing: 0.15em;
+  margin-bottom: 0.25rem;
+}
+
+.proj-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--green);
+  text-shadow: 0 0 8px rgba(0,255,136,0.3);
+}
+
+.proj-gain {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  margin-top: 0.2rem;
+}
+
+/* ── CAR FUND PROGRESS ──────────────────────────────────── */
+.car-fund-bar {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  height: 28px;
+  margin: 0.75rem 0;
+  overflow: hidden;
+  position: relative;
+}
+.car-fund-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1a3a00, var(--green));
+  box-shadow: 0 0 10px var(--green);
+  transition: width 0.5s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 0.5rem;
+}
+.car-fund-fill span {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.6rem;
+  color: var(--bg);
+  font-weight: 700;
+}
+.car-fund-target {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.58rem;
+  color: var(--text-dim);
+}
+
+/* ── CAR SVG ────────────────────────────────────────────── */
+.leopard-svg {
+  width: 100%;
+  max-width: 520px;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 0 12px rgba(0,232,216,0.25));
+}
+
+/* ── NOTICE ─────────────────────────────────────────────── */
+.notice {
+  background: rgba(0,232,216,0.03);
+  border: 1px solid rgba(0,232,216,0.12);
+  border-radius: 2px;
+  padding: 0.65rem 0.9rem;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+.notice strong { color: var(--vfd-cyan); font-weight: normal; }
+
+/* ── TOAST ──────────────────────────────────────────────── */
+#toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: var(--bg2);
+  border: 1px solid var(--vfd-cyan);
+  color: var(--vfd-cyan);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  padding: 0.6rem 1rem;
+  border-radius: 2px;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.2s;
+  pointer-events: none;
+  text-shadow: 0 0 8px rgba(0,232,216,0.5);
+  box-shadow: 0 0 20px rgba(0,232,216,0.1);
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── MODAL ──────────────────────────────────────────────── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; overflow-y: auto; padding: 1rem; }
+.modal-overlay.open { display: flex; align-items: flex-start; justify-content: center; }
+.modal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  width: 100%;
+  max-width: 500px;
+  padding: 1.5rem;
+  position: relative;
+  margin: auto;
+}
+.modal::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--vfd-cyan), transparent); }
+.modal-close { position: absolute; top: 0.9rem; right: 0.9rem; font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--text-dim); cursor: pointer; background: none; border: 1px solid var(--border); padding: 0.25rem 0.5rem; border-radius: 2px; }
+.modal-close:hover { color: var(--text); border-color: var(--text-dim); }
+.modal-title { font-family: 'Orbitron', monospace; font-size: 0.85rem; font-weight: 700; color: var(--vfd-cyan); letter-spacing: 0.15em; margin-bottom: 1.1rem; text-shadow: 0 0 8px rgba(0,232,216,0.4); }
+
+/* ── PAYCHECK INDICATOR ─────────────────────────────────── */
+.paycheck-strip {
+  background: linear-gradient(90deg, rgba(0,232,216,0.05), transparent);
+  border: 1px solid rgba(0,232,216,0.15);
+  border-radius: 2px;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* ── EMPTY STATE ────────────────────────────────────────── */
+.empty-state { text-align: center; padding: 3rem 1.5rem; color: var(--text-dim); }
+.empty-state .big { font-family: 'Orbitron', monospace; font-size: 2.5rem; color: var(--border); font-weight: 900; letter-spacing: 0.1em; }
+.empty-state p { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; letter-spacing: 0.1em; margin-top: 0.5rem; }
+
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--vfd-dim); }
+
+.split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+@media (max-width: 600px) { .split-grid { grid-template-columns: 1fr; } }
+
+#import-file { display: none; }
+.import-label { font-family: 'Share Tech Mono', monospace; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.55rem 1.1rem; border: 1px solid var(--border); border-radius: 2px; cursor: pointer; color: var(--text-dim); display: inline-block; transition: all 0.15s; }
+.import-label:hover { border-color: var(--amber); color: var(--amber); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo-area">
+      <div class="logo-text">LEOPARD</div>
+      <div class="logo-sub">FINANCE SYSTEM v1.0</div>
+    </div>
+    <div class="header-readouts">
+      <div class="readout">
+        <div class="readout-label">Balance</div>
+        <div class="readout-val vfd" id="hdr-balance">$0.00</div>
+      </div>
+      <div class="readout">
+        <div class="readout-label">Car Fund</div>
+        <div class="readout-val vfd-amber" id="hdr-carfund">$0.00</div>
+      </div>
+      <div class="readout">
+        <div class="readout-label">Next Pay</div>
+        <div class="readout-val" style="font-family:'Orbitron',monospace;font-size:0.95rem;color:var(--text-dim);" id="hdr-nextpay">--</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- F31 Leopard SVG silhouette -->
+  <div class="car-strip">
+    <svg class="leopard-svg" viewBox="0 0 520 85" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Ground shadow -->
+      <ellipse cx="260" cy="80" rx="200" ry="4" fill="rgba(0,232,216,0.04)"/>
+      <!-- Body main -->
+      <path d="M60 62 L75 62 L85 38 L115 28 L180 20 L260 18 L340 19 L390 26 L420 38 L440 62 L460 62" stroke="#00e8d8" stroke-width="1.5" fill="rgba(0,20,30,0.8)" stroke-linejoin="round"/>
+      <!-- Roof -->
+      <path d="M130 38 Q160 14 220 11 Q270 8 320 11 Q370 15 395 36" stroke="#00e8d8" stroke-width="1.2" fill="none"/>
+      <!-- Rear quarter window -->
+      <path d="M320 14 L390 34 L370 38 L310 38 Z" stroke="#00a8b8" stroke-width="0.8" fill="rgba(0,100,140,0.15)"/>
+      <!-- Front quarter window -->
+      <path d="M135 38 L155 16 L230 12 L230 38 Z" stroke="#00a8b8" stroke-width="0.8" fill="rgba(0,100,140,0.15)"/>
+      <!-- B pillar / side window center -->
+      <path d="M230 12 L235 38" stroke="#00e8d8" stroke-width="0.7"/>
+      <path d="M295 11 L300 38" stroke="#00e8d8" stroke-width="0.7"/>
+      <!-- Side window center -->
+      <path d="M235 13 L295 11 L300 38 L230 38 Z" stroke="#00a8b8" stroke-width="0.8" fill="rgba(0,100,140,0.12)"/>
+      <!-- Door line -->
+      <line x1="80" y1="50" x2="445" y2="50" stroke="#00e8d8" stroke-width="0.5" stroke-dasharray="3 2"/>
+      <!-- Front bumper / fascia -->
+      <path d="M60 62 L55 65 L55 68 L80 70 L80 62" stroke="#00e8d8" stroke-width="1" fill="rgba(0,20,30,0.9)"/>
+      <!-- Rear bumper -->
+      <path d="M440 62 L445 65 L445 68 L465 68 L465 62" stroke="#00e8d8" stroke-width="1" fill="rgba(0,20,30,0.9)"/>
+      <!-- Front headlight -->
+      <rect x="56" y="44" width="18" height="8" rx="1" stroke="#ffb830" stroke-width="0.8" fill="rgba(255,184,48,0.12)"/>
+      <rect x="58" y="46" width="5" height="4" fill="rgba(255,184,48,0.4)"/>
+      <!-- Rear taillight -->
+      <rect x="440" y="44" width="18" height="8" rx="1" stroke="#ff3c3c" stroke-width="0.8" fill="rgba(255,60,60,0.12)"/>
+      <rect x="452" y="46" width="4" height="4" fill="rgba(255,60,60,0.35)"/>
+      <!-- Front wheel well -->
+      <path d="M90 70 Q110 62 130 70" stroke="#00e8d8" stroke-width="1" fill="none"/>
+      <!-- Rear wheel well -->
+      <path d="M370 70 Q390 62 410 70" stroke="#00e8d8" stroke-width="1" fill="none"/>
+      <!-- Front wheel -->
+      <circle cx="110" cy="72" r="10" stroke="#00e8d8" stroke-width="1.2" fill="rgba(0,10,18,0.9)"/>
+      <circle cx="110" cy="72" r="5" stroke="#00a8b8" stroke-width="0.8" fill="rgba(0,40,60,0.6)"/>
+      <circle cx="110" cy="72" r="1.5" fill="#00e8d8"/>
+      <!-- Rear wheel -->
+      <circle cx="390" cy="72" r="10" stroke="#00e8d8" stroke-width="1.2" fill="rgba(0,10,18,0.9)"/>
+      <circle cx="390" cy="72" r="5" stroke="#00a8b8" stroke-width="0.8" fill="rgba(0,40,60,0.6)"/>
+      <circle cx="390" cy="72" r="1.5" fill="#00e8d8"/>
+      <!-- Door handle details -->
+      <rect x="185" y="47" width="12" height="3" rx="1" stroke="#00a8b8" stroke-width="0.6" fill="none"/>
+      <rect x="315" y="47" width="12" height="3" rx="1" stroke="#00a8b8" stroke-width="0.6" fill="none"/>
+      <!-- Leopard badge area -->
+      <text x="260" y="56" font-family="Orbitron, monospace" font-size="5" fill="#00e8d8" text-anchor="middle" letter-spacing="3" opacity="0.6">LEOPARD</text>
+      <!-- antenna -->
+      <line x1="160" y1="11" x2="155" y2="1" stroke="#00e8d8" stroke-width="0.6" opacity="0.5"/>
+      <!-- Undercarriage line -->
+      <line x1="80" y1="70" x2="370" y2="70" stroke="#00a8b8" stroke-width="0.7" opacity="0.4"/>
+      <line x1="410" y1="70" x2="445" y2="70" stroke="#00a8b8" stroke-width="0.7" opacity="0.4"/>
+    </svg>
+  </div>
+</header>
+
+<nav class="nav-bar">
+  <button class="nav-btn active" data-panel="dashboard">⬡ DASH</button>
+  <button class="nav-btn" data-panel="spend">+ SPEND</button>
+  <button class="nav-btn" data-panel="budget">◈ BUDGET</button>
+  <button class="nav-btn" data-panel="retirement">∑ RETIRE</button>
+  <button class="nav-btn" data-panel="carfund">⌖ CAR FUND</button>
+  <button class="nav-btn" data-panel="history">▶ HISTORY</button>
+  <button class="nav-btn" data-panel="settings">⚙ CONFIG</button>
+  <button class="nav-btn" data-panel="drive">◈ DRIVE</button>
+</nav>
+
+<div class="main">
+
+  <!-- ===== DASHBOARD ===== -->
+  <div class="panel active" id="panel-dashboard">
+
+    <div class="paycheck-strip">
+      <div>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);letter-spacing:0.15em;">LAST PAYCHECK</span><br>
+        <span class="vfd" style="font-family:'Orbitron',monospace;font-size:1rem;" id="dash-last-pay">—</span>
+      </div>
+      <div style="text-align:center;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);letter-spacing:0.15em;">PERIOD BUDGET</span><br>
+        <span class="vfd-amber" style="font-family:'Orbitron',monospace;font-size:1rem;" id="dash-period-budget">$1,600.00</span>
+      </div>
+      <div style="text-align:right;">
+        <span style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);letter-spacing:0.15em;">PERIOD SPENT</span><br>
+        <span style="font-family:'Orbitron',monospace;font-size:1rem;color:var(--red);" id="dash-period-spent">$0.00</span>
+      </div>
+    </div>
+
+    <!-- Big gauges -->
+    <div class="dash-grid" id="dash-gauges"></div>
+
+    <!-- Weekly breakdown -->
+    <div class="sec-head">WEEKLY CAPS — CURRENT WEEK</div>
+    <div class="card" id="dash-weekly-card"></div>
+
+    <!-- Monthly fixed -->
+    <div class="sec-head">MONTHLY FIXED</div>
+    <div class="card" id="dash-monthly-card"></div>
+
+    <!-- Annual pools -->
+    <div class="sec-head">ANNUAL POOLS</div>
+    <div class="card" id="dash-annual-card"></div>
+
+    <!-- Subscriptions -->
+    <div class="sec-head">SUBSCRIPTIONS</div>
+    <div class="card" id="dash-subs-card"></div>
+
+  </div>
+
+  <!-- ===== SPEND ===== -->
+  <div class="panel" id="panel-spend">
+    <div class="notice"><strong>// LOG EXPENSE</strong> — Select category, enter amount. Weekly/monthly/annual caps auto-update.</div>
+    <div class="card">
+      <div class="modal-title">NEW TRANSACTION</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Date</label>
+          <input type="date" id="tx-date">
+        </div>
+        <div class="field">
+          <label>Category</label>
+          <select id="tx-cat">
+            <option value="">— select —</option>
+            <option value="food">Food</option>
+            <option value="gas">Gas</option>
+            <option value="entertainment">Entertainment</option>
+            <option value="necessities">Necessities</option>
+            <option value="repairs">Car Repairs</option>
+            <option value="travel">Travel (non-gas)</option>
+            <option value="gym">Gym</option>
+            <option value="carfund">→ Car Fund</option>
+            <option value="emergency">→ Emergency Fund</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div id="necessities-subcat" style="display:none;" class="field">
+        <label>Item Type</label>
+        <select id="tx-nec-type">
+          <option value="toiletries">Toiletries</option>
+          <option value="cat food">Cat Food</option>
+          <option value="cat litter">Cat Litter</option>
+          <option value="cat treats">Cat Treats</option>
+          <option value="cat toys">Cat Toys</option>
+          <option value="cleaning supplies">Cleaning Supplies</option>
+          <option value="other">Other (describe below)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Amount ($)</label>
+        <input type="number" id="tx-amount" min="0.01" step="0.01" placeholder="0.00">
+      </div>
+      <div class="field">
+        <label>Description (optional)</label>
+        <input type="text" id="tx-desc" placeholder="e.g. Kroger run, Shell on Hwy 85...">
+      </div>
+      <div id="cap-warning" style="display:none;padding:0.5rem 0.75rem;background:rgba(255,60,60,0.08);border:1px solid rgba(255,60,60,0.3);border-radius:2px;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--red);margin-bottom:0.85rem;"></div>
+      <div class="btn-row" style="margin-top:0.5rem;">
+        <button class="btn btn-cyan" id="btn-save-tx">LOG TRANSACTION</button>
+        <button class="btn btn-ghost" id="btn-clear-tx">CLEAR</button>
+      </div>
+    </div>
+
+    <!-- Quick add paycheck -->
+    <div class="card">
+      <div class="modal-title">PAYCHECK RECEIVED</div>
+      <div class="notice" style="margin-bottom:0.75rem;"><strong>// </strong>Recording a paycheck adds $1,600 to your period balance and logs the date for next-pay calculations.</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Pay Date</label>
+          <input type="date" id="pay-date">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;">
+          <button class="btn btn-amber" id="btn-log-pay" style="width:100%;">LOG PAYCHECK +$1,600</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BUDGET ===== -->
+  <div class="panel" id="panel-budget">
+    <div class="notice"><strong>// BUDGET OVERVIEW</strong> — Weekly caps reset every Monday. Monthly caps reset on the 1st. Annual caps reset Jan 1. Unspent weekly funds roll into your Reserve, split 60% Car Fund / 40% Emergency Fund each Sunday night.</div>
+    <div class="card">
+      <div class="modal-title">PERIOD SUMMARY</div>
+      <div id="budget-full-view"></div>
+    </div>
+    <div class="card">
+      <div class="modal-title">RESERVE POOL</div>
+      <div id="reserve-view"></div>
+    </div>
+  </div>
+
+  <!-- ===== RETIREMENT ===== -->
+  <div class="panel" id="panel-retirement">
+    <div class="notice"><strong>// RETIREMENT PROJECTOR</strong> — Based on $71,433.78 balance as of Feb 25 2026, contributing ~$18,750/yr (your 20% + 5% employer match on $75k salary). Projected at 7% average annual return. Adjust in Config.</div>
+    <div class="card">
+      <div class="modal-title">CURRENT BALANCE</div>
+      <div style="text-align:center;padding:1rem 0;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:0.5rem;">401(K) BALANCE TODAY</div>
+        <div class="vfd-green" style="font-family:'Orbitron',monospace;font-size:2.5rem;font-weight:900;" id="ret-current">$71,433.78</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--text-dim);margin-top:0.3rem;" id="ret-gain-ytd">+$19,329.59 total gains (37.1%) · YTD rate +3.48%</div>
+      </div>
+    </div>
+    <div class="sec-head">PROJECTED MILESTONES</div>
+    <div class="proj-grid" id="ret-projections"></div>
+    <div class="card">
+      <div class="modal-title">ALLOCATION</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);line-height:2.2;">
+        <span style="color:var(--vfd-cyan);">FFOPX</span> FID FDM IDX 2050 IPR — 1,733.434 shares @ $32.56 — <span style="color:var(--green);">$56,440.61</span> (+39.1%)<br>
+        <span style="color:var(--vfd-cyan);">FSPGX</span> FID LG CAP GR IDX — 334.445 shares @ $44.83 — <span style="color:var(--green);">$14,993.17</span> (+30.1%)<br>
+        <span style="color:var(--text-dim);">Pre-Tax: 10% · Roth: 10% · Employer Match: up to 5%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CAR FUND ===== -->
+  <div class="panel" id="panel-carfund">
+    <div class="notice"><strong>// F31 LEOPARD ACQUISITION FUND</strong> — Target: $18,000 all-in (car + shipping + import + GA registration). Rolling unspent budget surplus automatically contributes. You can also manually transfer to the fund.</div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+        <div class="modal-title" style="margin-bottom:0;">CAR FUND BALANCE</div>
+        <div class="vfd-amber" style="font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;" id="cf-balance">$0.00</div>
+      </div>
+      <div class="car-fund-bar">
+        <div class="car-fund-fill" id="cf-fill" style="width:0%"><span id="cf-pct">0%</span></div>
+        <div class="car-fund-target">TARGET: $18,000</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);margin-top:0.3rem;">
+        <span>$0</span>
+        <span id="cf-eta">ETA: calculating...</span>
+        <span>$18,000</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="modal-title">MANUAL TRANSFER TO CAR FUND</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Amount ($)</label>
+          <input type="number" id="cf-manual-amt" min="1" step="1" placeholder="0.00">
+        </div>
+        <div class="field" style="display:flex;align-items:flex-end;">
+          <button class="btn btn-amber" id="btn-cf-transfer" style="width:100%;">TRANSFER</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="modal-title">THE TARGET: NISSAN LEOPARD F31</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.68rem;color:var(--text-dim);line-height:2.0;">
+        <span style="color:var(--vfd-cyan);">BODY</span> — Pillarless hardtop coupe · Pre-facelift (pre-Aug 1988 Zenki) preferred<br>
+        <span style="color:var(--vfd-cyan);">ENGINE</span> — VG30DET or VG20DET · Turbo preferred<br>
+        <span style="color:var(--vfd-cyan);">CLUSTER</span> — Full VFD digital instrument panel required<br>
+        <span style="color:var(--vfd-cyan);">CONDITION</span> — No rust · No deteriorated rubber · Operational seals<br>
+        <span style="color:var(--vfd-cyan);">GRADE</span> — Japanese auction 3.5+ (4 preferred)<br>
+        <span style="color:var(--amber);">BUDGET</span> — $10–15k car in Japan + $2–4k import/ship/reg<br>
+        <span style="color:var(--green);">SOURCE</span> — Goo-net Exchange · TCV · JDM Supply<br>
+        <span style="color:var(--text-dim);">ABUNAI DEKA</span> — 危ない刑事 1986 · Toshiki Inoue production
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HISTORY ===== -->
+  <div class="panel" id="panel-history">
+    <div class="split-grid" style="margin-bottom:0.85rem;">
+      <div>
+        <input type="text" id="hist-search" placeholder="Search transactions...">
+      </div>
+      <div>
+        <select id="hist-cat-filter">
+          <option value="">All categories</option>
+          <option value="food">Food</option>
+          <option value="gas">Gas</option>
+          <option value="entertainment">Entertainment</option>
+          <option value="necessities">Necessities</option>
+          <option value="repairs">Car Repairs</option>
+          <option value="travel">Travel</option>
+          <option value="gym">Gym</option>
+          <option value="carfund">Car Fund</option>
+          <option value="emergency">Emergency Fund</option>
+          <option value="paycheck">Paycheck</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="card" id="history-list"></div>
+  </div>
+
+  <!-- ===== SETTINGS ===== -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <div class="modal-title">SUBSCRIPTIONS</div>
+      <div id="subs-config"></div>
+    </div>
+    <div class="card">
+      <div class="modal-title">RETIREMENT PARAMETERS</div>
+      <div class="field-row">
+        <div class="field">
+          <label>Starting Balance ($)</label>
+          <input type="number" id="cfg-ret-start" value="71433.78" step="0.01">
+        </div>
+        <div class="field">
+          <label>Annual Contribution ($)</label>
+          <input type="number" id="cfg-ret-contrib" value="18750" step="100">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Annual Return Rate (%)</label>
+          <input type="number" id="cfg-ret-rate" value="7" step="0.1" min="1" max="15">
+        </div>
+        <div class="field">
+          <label>Start Date</label>
+          <input type="date" id="cfg-ret-startdate" value="2026-02-25">
+        </div>
+      </div>
+      <div class="btn-row"><button class="btn btn-cyan" id="btn-save-cfg">SAVE CONFIG</button></div>
+    </div>
+    <div class="card">
+      <div class="modal-title">DATA</div>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn btn-ghost" id="btn-export">EXPORT JSON</button>
+        <label class="import-label" for="import-file">IMPORT JSON</label>
+        <input type="file" id="import-file" accept=".json">
+        <button class="btn btn-red" id="btn-nuke">CLEAR ALL DATA</button>
+      </div>
+      <div id="import-status" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-top:0.65rem;color:var(--text-dim);"></div>
+    </div>
+    <div class="card">
+      <div class="modal-title">ABOUT</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);line-height:2;">
+        Paycheck: <span style="color:var(--vfd-cyan);">$1,600.00 biweekly (post-tax, post-401k)</span><br>
+        Monthly gross income: <span style="color:var(--vfd-cyan);">~$3,466.67</span><br>
+        Rollover logic: <span style="color:var(--text);">Unspent weekly funds → Reserve → 60% Car Fund + 40% Emergency</span><br>
+        Annual caps: <span style="color:var(--text);">Car Repairs $3,000 · Travel $2,000</span><br>
+        Weekly caps: <span style="color:var(--text);">Food $100 · Gas $50 · Entertainment $100</span><br>
+        Monthly caps: <span style="color:var(--text);">Gym $80 (fixed) · Necessities $80</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DRIVE ===== -->
+  <div class="panel" id="panel-drive" style="padding:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem 0.5rem;border-bottom:1px solid var(--border);">
+      <div style="font-family:'Orbitron',monospace;font-size:0.7rem;letter-spacing:0.2em;color:var(--vfd-cyan);">◈ DRIVE</div>
+      <div id="drive-hud" style="font-family:'Orbitron',monospace;font-size:0.65rem;color:var(--amber);letter-spacing:0.15em;display:flex;gap:1.25rem;">
+        <span>SPD <span id="hud-speed">0</span> MPH</span>
+        <span>DIST <span id="hud-dist">0.0</span> mi</span>
+        <span>GEAR <span id="hud-gear">N</span></span>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);">← → STEER &nbsp;|&nbsp; SPACE NITRO &nbsp;|&nbsp; P PAUSE</div>
+    </div>
+    <canvas id="drive-canvas" style="display:block;width:100%;background:#000;cursor:none;"></canvas>
+    <div id="drive-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;">
+      <div style="font-family:'Orbitron',monospace;font-size:1.8rem;color:var(--vfd-cyan);text-shadow:0 0 20px var(--vfd-cyan);letter-spacing:0.25em;margin-bottom:0.5rem;">LEOPARD</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--amber);letter-spacing:0.2em;margin-bottom:2rem;">VG30DET · 255PS · TURBO MEDALIST</div>
+      <pre id="drive-car-splash" style="font-family:'Share Tech Mono',monospace;font-size:0.75rem;color:var(--vfd-cyan);line-height:1.3;text-align:center;text-shadow:0 0 10px var(--vfd-cyan);margin-bottom:2rem;">  _______
+ /|_||_\`.
+(  _    _  )
+=`-(_)--(_)-'</pre>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.7rem;color:var(--text-dim);letter-spacing:0.15em;margin-bottom:0.4rem;">PRESS ENTER OR CLICK TO START</div>
+      <div id="drive-budget-msg" style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--green);letter-spacing:0.1em;"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+$(function() {
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+const PAYCHECK_AMT = 1600;
+const PAYDAY_INTERVAL_DAYS = 14;
+// Next paycheck from known biweekly cycle anchored to a Friday
+// Anchor: March 7, 2026 (first pay day after move-in)
+const PAY_ANCHOR = new Date('2026-03-07');
+
+const CAPS = {
+  food:          { type: 'weekly',   cap: 100 },
+  gas:           { type: 'weekly',   cap: 50  },
+  entertainment: { type: 'weekly',   cap: 100 },
+  necessities:   { type: 'monthly',  cap: 80  },
+  gym:           { type: 'monthly',  cap: 80  },
+  repairs:       { type: 'annual',   cap: 3000 },
+  travel:        { type: 'annual',   cap: 2000 },
+};
+
+const CAT_LABELS = {
+  food: 'FOOD', gas: 'GAS', entertainment: 'ENTERTAIN',
+  necessities: 'NECESSITIES', gym: 'GYM', repairs: 'CAR REPAIRS',
+  travel: 'TRAVEL', carfund: '→ CAR FUND', emergency: '→ EMERGENCY',
+  paycheck: '↑ PAYCHECK', other: 'OTHER'
+};
+
+const CAR_FUND_TARGET = 18000;
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let state = JSON.parse(localStorage.getItem('leopard_budget') || 'null') || {
+  transactions: [],   // {id, date, cat, subcat, desc, amount (positive=spend, negative=income)}
+  paychecks: [],      // dates
+  subs: {
+    ffxi:      { name: 'FFXI Online', cost: 25, active: true },
+    streaming: { name: 'Streaming (Hulu/Prmnt+)', cost: 20, active: false },
+  },
+  carFund: 0,
+  emergency: 0,
+  reserve: 0,
+  retConfig: {
+    startBalance: 71433.78,
+    annualContrib: 18750,
+    rate: 0.07,
+    startDate: '2026-02-25',
+  }
+};
+
+function save() { localStorage.setItem('leopard_budget', JSON.stringify(state)); }
+
+// ── DATE HELPERS ──────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().split('T')[0]; }
+
+function startOfWeek(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const day = d.getDay(); // 0=Sun
+  const diff = day === 0 ? 6 : day - 1; // Monday start
+  d.setDate(d.getDate() - diff);
+  return d.toISOString().split('T')[0];
+}
+
+function startOfMonth(dateStr) { return dateStr.substring(0,7) + '-01'; }
+function startOfYear(dateStr)  { return dateStr.substring(0,4) + '-01-01'; }
+function currentWeekStart()    { return startOfWeek(today()); }
+function currentMonthStart()   { return startOfMonth(today()); }
+function currentYearStart()    { return startOfYear(today()); }
+
+function nextPayday() {
+  const now = new Date();
+  const anchor = new Date(PAY_ANCHOR);
+  const diffMs = now - anchor;
+  const diffDays = Math.floor(diffMs / (1000*60*60*24));
+  const periodsPassed = Math.floor(diffDays / PAYDAY_INTERVAL_DAYS);
+  let next = new Date(anchor);
+  next.setDate(anchor.getDate() + (periodsPassed + 1) * PAYDAY_INTERVAL_DAYS);
+  if (next < now) next.setDate(next.getDate() + PAYDAY_INTERVAL_DAYS);
+  return next;
+}
+
+function daysUntilNextPay() {
+  const np = nextPayday();
+  const now = new Date();
+  const diff = Math.ceil((np - now) / (1000*60*60*24));
+  return diff;
+}
+
+// ── SPEND CALCULATIONS ────────────────────────────────────────────────────────
+function spentInPeriod(cat, periodStart) {
+  return state.transactions
+    .filter(t => t.cat === cat && t.date >= periodStart && t.amount > 0)
+    .reduce((s, t) => s + t.amount, 0);
+}
+
+function weeklySpent(cat) { return spentInPeriod(cat, currentWeekStart()); }
+function monthlySpent(cat) { return spentInPeriod(cat, currentMonthStart()); }
+function annualSpent(cat)  { return spentInPeriod(cat, currentYearStart()); }
+
+function spentByPeriod(cat) {
+  const type = CAPS[cat] ? CAPS[cat].type : null;
+  if (type === 'weekly')  return weeklySpent(cat);
+  if (type === 'monthly') return monthlySpent(cat);
+  if (type === 'annual')  return annualSpent(cat);
+  return 0;
+}
+
+function periodTotal() {
+  // Total spent since last paycheck
+  const lastPay = state.paychecks.length
+    ? state.paychecks[state.paychecks.length - 1]
+    : currentYearStart();
+  return state.transactions
+    .filter(t => t.date >= lastPay && t.amount > 0 && t.cat !== 'carfund' && t.cat !== 'emergency')
+    .reduce((s, t) => s + t.amount, 0);
+}
+
+function activeSubsTotal() {
+  return Object.values(state.subs).filter(s => s.active).reduce((a, s) => a + s.cost, 0);
+}
+
+// Monthly theoretical budget breakdown
+function monthlyBudget() {
+  const subs = activeSubsTotal();
+  return {
+    gym: 80, necessities: 80,
+    food: 433, gas: 217, entertainment: 433,
+    repairs: 250, travel: 167, subs,
+    total: 80 + 80 + 433 + 217 + 433 + 250 + 167 + subs
+  };
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+$('#tx-date').val(today());
+$('#pay-date').val(today());
+renderAll();
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+$('.nav-btn').on('click', function() {
+  const p = $(this).data('panel');
+  $('.nav-btn').removeClass('active');
+  $(this).addClass('active');
+  $('.panel').removeClass('active');
+  $('#panel-' + p).addClass('active');
+  if (p === 'retirement') renderRetirement();
+  if (p === 'history') renderHistory();
+  if (p === 'carfund') renderCarFund();
+  if (p === 'budget') renderBudgetPanel();
+  if (p === 'settings') renderSettings();
+  if (p === 'drive') initDrive();
+});
+
+// ── CATEGORY SUBTYPE ──────────────────────────────────────────────────────────
+$('#tx-cat').on('change', function() {
+  const val = $(this).val();
+  $('#necessities-subcat').toggle(val === 'necessities');
+  checkCapWarning();
+});
+
+$('#tx-amount').on('input', checkCapWarning);
+
+function checkCapWarning() {
+  const cat = $('#tx-cat').val();
+  const amt = parseFloat($('#tx-amount').val()) || 0;
+  const cap = CAPS[cat];
+  if (!cap || !amt) { $('#cap-warning').hide(); return; }
+  const spent = spentByPeriod(cat);
+  const remaining = cap.cap - spent;
+  if (amt > remaining) {
+    const over = amt - remaining;
+    $('#cap-warning')
+      .text(`⚠ OVER ${cap.type.toUpperCase()} CAP by $${over.toFixed(2)} — remaining $${Math.max(0,remaining).toFixed(2)} of $${cap.cap}`)
+      .show();
+  } else {
+    $('#cap-warning').hide();
+  }
+}
+
+// ── LOG TRANSACTION ───────────────────────────────────────────────────────────
+$('#btn-save-tx').on('click', function() {
+  const cat = $('#tx-cat').val();
+  const amt = parseFloat($('#tx-amount').val());
+  const date = $('#tx-date').val() || today();
+  if (!cat) { toast('SELECT CATEGORY'); return; }
+  if (!amt || amt <= 0) { toast('ENTER VALID AMOUNT'); return; }
+
+  let subcat = '';
+  if (cat === 'necessities') subcat = $('#tx-nec-type').val();
+
+  const tx = {
+    id: Date.now(),
+    date, cat, subcat,
+    desc: $('#tx-desc').val().trim() || (subcat || CAT_LABELS[cat] || cat),
+    amount: amt
+  };
+
+  // Handle fund transfers
+  if (cat === 'carfund') state.carFund += amt;
+  if (cat === 'emergency') state.emergency += amt;
+
+  state.transactions.push(tx);
+  save();
+  renderAll();
+  toast('LOGGED: $' + amt.toFixed(2));
+  clearTxForm();
+});
+
+$('#btn-clear-tx').on('click', clearTxForm);
+
+function clearTxForm() {
+  $('#tx-cat').val(''); $('#tx-amount').val(''); $('#tx-desc').val('');
+  $('#tx-date').val(today()); $('#cap-warning').hide();
+  $('#necessities-subcat').hide();
+}
+
+// ── LOG PAYCHECK ──────────────────────────────────────────────────────────────
+$('#btn-log-pay').on('click', function() {
+  const date = $('#pay-date').val() || today();
+  state.paychecks.push(date);
+  state.transactions.push({ id: Date.now(), date, cat: 'paycheck', subcat:'', desc:'Biweekly paycheck', amount: -PAYCHECK_AMT });
+  save(); renderAll();
+  toast('PAYCHECK LOGGED');
+});
+
+// ── CAR FUND MANUAL TRANSFER ──────────────────────────────────────────────────
+$('#btn-cf-transfer').on('click', function() {
+  const amt = parseFloat($('#cf-manual-amt').val());
+  if (!amt || amt <= 0) { toast('ENTER AMOUNT'); return; }
+  state.carFund += amt;
+  state.transactions.push({ id: Date.now(), date: today(), cat: 'carfund', subcat:'', desc:'Manual transfer to car fund', amount: amt });
+  save(); renderAll(); renderCarFund();
+  toast('TRANSFERRED $' + amt.toFixed(2) + ' TO CAR FUND');
+  $('#cf-manual-amt').val('');
+});
+
+// ── SUBSCRIPTIONS ─────────────────────────────────────────────────────────────
+$(document).on('change', '.sub-toggle', function() {
+  const key = $(this).data('key');
+  state.subs[key].active = $(this).is(':checked');
+  save(); renderAll();
+});
+
+// ── HISTORY FILTERS ───────────────────────────────────────────────────────────
+$('#hist-search, #hist-cat-filter').on('input change', renderHistory);
+
+// ── DELETE TX ─────────────────────────────────────────────────────────────────
+$(document).on('click', '.tx-del', function() {
+  const id = +$(this).data('id');
+  const tx = state.transactions.find(t => t.id === id);
+  if (!tx) return;
+  if (tx.cat === 'carfund') state.carFund = Math.max(0, state.carFund - tx.amount);
+  if (tx.cat === 'emergency') state.emergency = Math.max(0, state.emergency - tx.amount);
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  save(); renderAll(); renderHistory();
+  toast('DELETED');
+});
+
+// ── SETTINGS SAVE ─────────────────────────────────────────────────────────────
+$('#btn-save-cfg').on('click', function() {
+  state.retConfig = {
+    startBalance: parseFloat($('#cfg-ret-start').val()) || 71433.78,
+    annualContrib: parseFloat($('#cfg-ret-contrib').val()) || 18750,
+    rate: (parseFloat($('#cfg-ret-rate').val()) || 7) / 100,
+    startDate: $('#cfg-ret-startdate').val() || '2026-02-25',
+  };
+  save(); renderRetirement(); toast('CONFIG SAVED');
+});
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+$('#btn-export').on('click', function() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'leopard_budget_' + today() + '.json';
+  a.click();
+});
+
+$('#import-file').on('change', function() {
+  const f = this.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.transactions) throw new Error('Invalid format');
+      state = imported;
+      save(); renderAll();
+      $('#import-status').text('✓ Import successful').css('color','var(--vfd-cyan)');
+      toast('IMPORTED');
+    } catch(e) {
+      $('#import-status').text('✗ ' + e.message).css('color','var(--red)');
+    }
+    $(this).val('');
+  };
+  r.readAsText(f);
+});
+
+$('#btn-nuke').on('click', function() {
+  if (!confirm('Delete ALL budget data?')) return;
+  state = { transactions:[], paychecks:[], subs: state.subs, carFund:0, emergency:0, reserve:0, retConfig: state.retConfig };
+  save(); renderAll(); toast('CLEARED');
+});
+
+// ── RENDER: ALL ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderHeader();
+  renderDashboard();
+}
+
+// ── RENDER: HEADER ────────────────────────────────────────────────────────────
+function renderHeader() {
+  const balance = PAYCHECK_AMT * state.paychecks.length - totalSpent();
+  $('#hdr-balance').text(fmtMoney(Math.max(0, balance)));
+  $('#hdr-carfund').text(fmtMoney(state.carFund));
+  const days = daysUntilNextPay();
+  const np = nextPayday();
+  $('#hdr-nextpay').text(np.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' (' + days + 'd)');
+}
+
+function totalSpent() {
+  return state.transactions.filter(t => t.amount > 0 && t.cat !== 'carfund' && t.cat !== 'emergency')
+    .reduce((s, t) => s + t.amount, 0);
+}
+
+// ── RENDER: DASHBOARD ─────────────────────────────────────────────────────────
+function renderDashboard() {
+  const lastPay = state.paychecks.length
+    ? state.paychecks[state.paychecks.length-1]
+    : null;
+
+  $('#dash-last-pay').text(lastPay
+    ? new Date(lastPay+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    : 'Not logged yet');
+
+  const pSpent = periodTotal();
+  $('#dash-period-spent').text('$' + pSpent.toFixed(2));
+
+  // Big gauges
+  const carFundPct = Math.min(100, (state.carFund / CAR_FUND_TARGET) * 100);
+  const budget = monthlyBudget();
+  const monthlySurplus = 3466.67 - budget.total;
+
+  const gauges = [
+    { label:'CAR FUND', val: fmtMoney(state.carFund), sub: `${carFundPct.toFixed(1)}% of $18k`, pct: carFundPct, color:'prog-amber', valClass:'vfd-amber' },
+    { label:'EMERGENCY', val: fmtMoney(state.emergency), sub: `target $6,000`, pct: Math.min(100,(state.emergency/6000)*100), color:'prog-cyan', valClass:'vfd' },
+    { label:'MO. SURPLUS', val: fmtMoney(monthlySurplus), sub:'estimated free cash', pct: Math.min(100,(monthlySurplus/3466.67)*100), color:'prog-green', valClass:'vfd-green' },
+    { label:'RETIRE EST.', val: fmtMoney(retProjected(1)), sub:'in 1 year', pct: Math.min(100,(retProjected(1)/500000)*100), color:'prog-cyan', valClass:'vfd' },
+  ];
+
+  $('#dash-gauges').html(gauges.map(g => `
+    <div class="gauge-card">
+      <div class="gauge-label">${g.label}</div>
+      <div class="gauge-val ${g.valClass}">${g.val}</div>
+      <div class="gauge-sub">${g.sub}</div>
+      <div class="prog-wrap"><div class="prog-fill ${g.color}" style="width:${g.pct}%"></div></div>
+    </div>`).join(''));
+
+  // Weekly caps
+  const weeklyCats = ['food','gas','entertainment'];
+  const wRows = weeklyCats.map(cat => budgetRow(cat, weeklySpent(cat), CAPS[cat].cap, 'week')).join('');
+  $('#dash-weekly-card').html(wRows || '<div style="color:var(--text-dim);font-family:\'Share Tech Mono\',monospace;font-size:0.65rem;">No data</div>');
+
+  // Monthly
+  const gymSpent = monthlySpent('gym');
+  const necSpent = monthlySpent('necessities');
+  const subTotal = activeSubsTotal();
+  let mRows = budgetRow('gym', gymSpent, 80, 'month', true);
+  mRows += budgetRow('necessities', necSpent, 80, 'month');
+  // Subs row
+  const subNames = Object.values(state.subs).filter(s=>s.active).map(s=>s.name).join(', ') || 'none active';
+  mRows += `<div class="budget-row">
+    <div class="budget-name">SUBSCRIPTIONS</div>
+    <div class="budget-spent ${subTotal>0?'vfd-amber':''}" style="font-family:'Orbitron',monospace;font-size:0.82rem;">${fmtMoney(subTotal)}</div>
+    <div class="budget-cap">${subNames}</div>
+    <div class="budget-remaining" style="color:var(--text-dim);">fixed</div>
+    <div class="prog-wrap"><div class="prog-fill prog-amber" style="width:100%"></div></div>
+  </div>`;
+  $('#dash-monthly-card').html(mRows);
+
+  // Annual
+  const aRows = ['repairs','travel'].map(cat => budgetRow(cat, annualSpent(cat), CAPS[cat].cap, 'year')).join('');
+  $('#dash-annual-card').html(aRows);
+
+  // Subs status
+  const subsHtml = Object.entries(state.subs).map(([k,s]) => `
+    <div class="sub-row">
+      <div>
+        <div class="sub-name">${s.name}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:0.58rem;color:var(--text-dim);">monthly</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="sub-cost">${fmtMoney(s.cost)}</div>
+        <label class="toggle">
+          <input type="checkbox" class="sub-toggle" data-key="${k}" ${s.active?'checked':''}>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>`).join('');
+  $('#dash-subs-card').html(subsHtml);
+}
+
+function budgetRow(cat, spent, cap, period, fixed=false) {
+  const pct = Math.min(100, (spent/cap)*100);
+  const remaining = cap - spent;
+  const over = remaining < 0;
+  const color = pct >= 100 ? 'prog-red' : pct >= 80 ? 'prog-amber' : 'prog-cyan';
+  const valColor = over ? 'vfd-red' : pct >= 80 ? 'vfd-amber' : 'vfd';
+  return `<div class="budget-row">
+    <div class="budget-name">${CAT_LABELS[cat]||cat}</div>
+    <div class="budget-spent ${valColor}" style="font-family:'Orbitron',monospace;font-size:0.82rem;">${fmtMoney(spent)}</div>
+    <div class="budget-cap">/ ${fmtMoney(cap)} ${period}${fixed?' (fixed)':''}</div>
+    <div class="budget-remaining ${over?'vfd-red':'vfd-green'}">${over?'OVER '+fmtMoney(-remaining):fmtMoney(remaining)+' left'}</div>
+    <div class="prog-wrap"><div class="prog-fill ${color}" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+// ── RENDER: BUDGET PANEL ──────────────────────────────────────────────────────
+function renderBudgetPanel() {
+  const budget = monthlyBudget();
+  const income = 3466.67;
+  const surplus = income - budget.total;
+
+  let html = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);">MONTHLY INCOME (est.)<br><span class="vfd" style="font-family:'Orbitron',monospace;font-size:1.2rem;">${fmtMoney(income)}</span></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);text-align:right;">BUDGETED OUTGOING<br><span class="vfd-amber" style="font-family:'Orbitron',monospace;font-size:1.2rem;">${fmtMoney(budget.total)}</span></div>
+    </div>`;
+
+  const items = [
+    ['Gym (fixed)', budget.gym], ['Necessities', budget.necessities],
+    ['Food (4.33 wk)', budget.food], ['Gas (4.33 wk)', budget.gas],
+    ['Entertainment (4.33 wk)', budget.entertainment],
+    ['Car Repairs (1/12)', budget.repairs], ['Travel (1/12)', budget.travel],
+    ['Subscriptions', budget.subs],
+  ];
+
+  html += items.map(([name, val]) => `
+    <div style="display:flex;justify-content:space-between;padding:0.4rem 0;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:0.68rem;">
+      <span style="color:var(--text-dim);">${name}</span>
+      <span style="color:var(--text);">${fmtMoney(val)}</span>
+    </div>`).join('');
+
+  html += `<div style="display:flex;justify-content:space-between;padding:0.6rem 0;font-family:'Orbitron',monospace;font-size:0.9rem;margin-top:0.25rem;">
+    <span style="color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:0.68rem;">MONTHLY SURPLUS (savings capacity)</span>
+    <span class="${surplus>0?'vfd-green':'vfd-red'}">${fmtMoney(surplus)}</span>
+  </div>`;
+
+  html += `<div style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;color:var(--text-dim);margin-top:0.5rem;line-height:1.8;">
+    At this rate: Car Fund fills in <span style="color:var(--amber);">${Math.ceil((CAR_FUND_TARGET - state.carFund) / (surplus * 0.6))} months</span> (60% of surplus) ·
+    Emergency fund ($6k) fills in <span style="color:var(--vfd-cyan);">${Math.ceil((6000 - state.emergency) / (surplus * 0.4))} months</span> (40%)
+  </div>`;
+
+  $('#budget-full-view').html(html);
+
+  $('#reserve-view').html(`
+    <div style="text-align:center;padding:0.75rem;">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);letter-spacing:0.2em;margin-bottom:0.3rem;">ROLLOVER RESERVE</div>
+      <div class="vfd" style="font-family:'Orbitron',monospace;font-size:1.8rem;font-weight:900;">${fmtMoney(state.reserve)}</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:0.6rem;color:var(--text-dim);margin-top:0.3rem;">Unspent weekly budget rolls here · Auto-splits weekly: 60% → Car Fund, 40% → Emergency</div>
+    </div>
+    <div class="btn-row" style="justify-content:center;margin-top:0.5rem;">
+      <button class="btn btn-amber" id="btn-roll-reserve">TRIGGER WEEKLY ROLLOVER NOW</button>
+    </div>`);
+
+  $('#btn-roll-reserve').on('click', doWeeklyRollover);
+}
+
+function doWeeklyRollover() {
+  if (state.reserve <= 0) { toast('RESERVE IS EMPTY'); return; }
+  const toCarFund = state.reserve * 0.6;
+  const toEmergency = state.reserve * 0.4;
+  state.carFund += toCarFund;
+  state.emergency += toEmergency;
+  state.transactions.push({ id: Date.now(), date: today(), cat:'carfund', subcat:'', desc:'Weekly rollover (60%)', amount: toCarFund });
+  state.transactions.push({ id: Date.now(), date: today(), cat:'emergency', subcat:'', desc:'Weekly rollover (40%)', amount: toEmergency });
+  state.reserve = 0;
+  save(); renderAll(); renderBudgetPanel();
+  toast('ROLLED OVER: $' + (toCarFund+toEmergency).toFixed(2));
+}
+
+// ── RENDER: RETIREMENT ────────────────────────────────────────────────────────
+function retProjected(years) {
+  const cfg = state.retConfig;
+  const r = cfg.rate / 12;
+  const n = years * 12;
+  const monthlyContrib = cfg.annualContrib / 12;
+  const start = cfg.startBalance;
+  let bal = start;
+  for (let i = 0; i < n; i++) { bal = bal * (1 + r) + monthlyContrib; }
+  return bal;
+}
+
+function renderRetirement() {
+  $('#cfg-ret-start').val(state.retConfig.startBalance);
+  $('#cfg-ret-contrib').val(state.retConfig.annualContrib);
+  $('#cfg-ret-rate').val((state.retConfig.rate * 100).toFixed(1));
+  $('#cfg-ret-startdate').val(state.retConfig.startDate);
+
+  const milestones = [1, 2, 3, 5, 10, 15, 20, 25];
+  const startYear = 2026;
+
+  const html = milestones.map(y => {
+    const val = retProjected(y);
+    const gain = val - state.retConfig.startBalance;
+    return `<div class="proj-item">
+      <div class="proj-year">${startYear + y} · +${y}yr</div>
+      <div class="proj-val">${fmtMoney(val)}</div>
+      <div class="proj-gain">+${fmtMoney(gain)} projected</div>
+    </div>`;
+  }).join('');
+
+  $('#ret-projections').html(html);
+  $('#ret-current').text(fmtMoney(state.retConfig.startBalance));
+}
+
+// ── RENDER: CAR FUND ──────────────────────────────────────────────────────────
+function renderCarFund() {
+  const pct = Math.min(100, (state.carFund / CAR_FUND_TARGET) * 100);
+  $('#cf-balance').text(fmtMoney(state.carFund));
+  $('#cf-fill').css('width', pct + '%');
+  $('#cf-pct').text(pct.toFixed(1) + '%');
+
+  const budget = monthlyBudget();
+  const monthlySurplus = 3466.67 - budget.total;
+  const monthlyToCarFund = monthlySurplus * 0.6;
+  const remaining = CAR_FUND_TARGET - state.carFund;
+  const months = remaining > 0 ? Math.ceil(remaining / monthlyToCarFund) : 0;
+
+  if (months > 0) {
+    const eta = new Date();
+    eta.setMonth(eta.getMonth() + months);
+    $('#cf-eta').text('ETA: ' + eta.toLocaleDateString('en-US',{month:'short',year:'numeric'}) + ' (~' + months + 'mo)');
+  } else {
+    $('#cf-eta').text('TARGET REACHED ✓');
+  }
+}
+
+// ── RENDER: HISTORY ───────────────────────────────────────────────────────────
+function renderHistory() {
+  const search = ($('#hist-search').val()||'').toLowerCase();
+  const catFilter = $('#hist-cat-filter').val();
+
+  let txs = [...state.transactions].reverse().filter(t => {
+    const ms = !search || t.desc.toLowerCase().includes(search) || (t.subcat||'').toLowerCase().includes(search);
+    const mc = !catFilter || t.cat === catFilter;
+    return ms && mc;
+  });
+
+  if (!txs.length) {
+    $('#history-list').html('<div class="empty-state"><div class="big">EMPTY</div><p>No transactions logged yet</p></div>');
+    return;
+  }
+
+  const html = txs.map(t => {
+    const isIncome = t.amount < 0;
+    const label = CAT_LABELS[t.cat] || t.cat;
+    const color = isIncome ? 'var(--green)' : t.cat === 'carfund' || t.cat === 'emergency' ? 'var(--amber)' : 'var(--red)';
+    return `<div class="tx-item">
+      <div><div class="tx-date">${t.date}</div><div class="tx-cat">${label}</div></div>
+      <div><div class="tx-desc">${escHtml(t.desc)}</div>${t.subcat?'<div class="tx-cat">'+escHtml(t.subcat)+'</div>':''}</div>
+      <div class="tx-amt" style="color:${color};">${isIncome?'+':'−'}${fmtMoney(Math.abs(t.amount))}</div>
+      <div class="tx-del" data-id="${t.id}" title="Delete">✕</div>
+    </div>`;
+  }).join('');
+
+  $('#history-list').html(html);
+}
+
+// ── RENDER: SETTINGS ──────────────────────────────────────────────────────────
+function renderSettings() {
+  const subsHtml = Object.entries(state.subs).map(([k,s]) => `
+    <div class="sub-row">
+      <div><div class="sub-name">${s.name}</div></div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <div class="sub-cost">${fmtMoney(s.cost)}/mo</div>
+        <label class="toggle">
+          <input type="checkbox" class="sub-toggle" data-key="${k}" ${s.active?'checked':''}>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+      </div>
+    </div>`).join('');
+  $('#subs-config').html(subsHtml);
+  $('#cfg-ret-start').val(state.retConfig.startBalance);
+  $('#cfg-ret-contrib').val(state.retConfig.annualContrib);
+  $('#cfg-ret-rate').val((state.retConfig.rate * 100).toFixed(1));
+  $('#cfg-ret-startdate').val(state.retConfig.startDate);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function fmtMoney(n) {
+  return '$' + Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg) {
+  $('#toast').text(msg).addClass('show');
+  setTimeout(() => $('#toast').removeClass('show'), 2200);
+}
+
+// Initial retirement render
+renderRetirement();
+renderCarFund();
+renderSettings();
+
+// ── OUTRUN DRIVE GAME ─────────────────────────────────────────────────────────
+let driveInitialised = false;
+
+function initDrive() {
+  if (driveInitialised) { showDriveOverlay(); return; }
+  driveInitialised = true;
+
+  const canvas = document.getElementById('drive-canvas');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('drive-overlay');
+
+  // Budget health → speed tier (max speed, weather, time of day)
+  function budgetHealth() {
+    const txs = state.transactions;
+    const monthAgo = new Date(); monthAgo.setDate(monthAgo.getDate() - 30);
+    const recent = txs.filter(t => new Date(t.date) >= monthAgo);
+    const spent = recent.filter(t => t.amount > 0).reduce((s,t)=>s+t.amount, 0);
+    const earned = recent.filter(t => t.amount < 0).reduce((s,t)=>s+Math.abs(t.amount), 0);
+    if (!earned) return 0.5;
+    return Math.min(1, Math.max(0, 1 - (spent / (earned || 1))));
+  }
+
+  const health = budgetHealth();
+  const BASE_SPEED   = 1.5 + health * 3.5;   // 1.5–5.0
+  const MAX_SPEED    = BASE_SPEED * 1.6;
+  const IS_DAY       = health > 0.5;
+  const IS_RAIN      = health < 0.35;
+  const HEALTH_PCT   = Math.round(health * 100);
+
+  document.getElementById('drive-budget-msg').textContent =
+    IS_RAIN ? `BUDGET HEALTH ${HEALTH_PCT}% — STORMY NIGHT` :
+    !IS_DAY  ? `BUDGET HEALTH ${HEALTH_PCT}% — TWILIGHT RUN` :
+               `BUDGET HEALTH ${HEALTH_PCT}% — CLEAR SKIES`;
+
+  // Sizing
+  function resize() {
+    const w = canvas.parentElement.clientWidth;
+    const h = Math.min(420, Math.round(w * 0.45));
+    canvas.width = w; canvas.height = h;
+    VP_W = w; VP_H = h;
+    VAN_Y = h * 0.72;
+    HORIZON = h * 0.42;
+  }
+  let VP_W, VP_H, VAN_Y, HORIZON;
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Game state
+  let speed = 0, playerX = 0, curve = 0, curveSeg = 0, curveTarget = 0;
+  let distance = 0, frame = 0, paused = false, running = false;
+  let keys = {}, nitro = false, nitroTimer = 0;
+  let rainDrops = Array.from({length:80}, () => ({ x: Math.random(), y: Math.random(), len: 4+Math.random()*8 }));
+  let gear = 'N', gearTimer = 0;
+  let trees = Array.from({length: 12}, (_,i) => ({ z: (i/12), side: i%2===0?-1:1 }));
+  let signs = [];
+  let signTimer = Math.floor(Math.random() * 80 + 40);
+
+  const SIGN_TEXTS = ['LEOPARD F31','VG30DET','TURBO','255PS','ABUNAI DEKA','NISSAN','MEDALIST','ULTIMA'];
+
+  function showDriveOverlay2() {
+    overlay.style.display = 'flex';
+    running = false;
+  }
+
+  function startGame() {
+    overlay.style.display = 'none';
+    running = true;
+    speed = BASE_SPEED * 0.3;
+    loop();
+  }
+
+  overlay.style.display = 'flex';
+  canvas.addEventListener('click', () => { if (!running) startGame(); });
+  document.addEventListener('keydown', function driveKey(e) {
+    if ($('#panel-drive').hasClass('active')) {
+      keys[e.code] = true;
+      if (e.code === 'Enter' && !running) startGame();
+      if (e.code === 'KeyP') paused = !paused;
+      if (e.code === 'Space') { e.preventDefault(); nitro = true; }
+    }
+  });
+  document.addEventListener('keyup', e => { keys[e.code] = false; if (e.code === 'Space') nitro = false; });
+
+  // Touch / swipe for mobile
+  let touchStartX = null;
+  canvas.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; if (!running) startGame(); }, {passive:true});
+  canvas.addEventListener('touchmove', e => {
+    if (!touchStartX) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    if (dx > 15) keys['ArrowRight'] = true; else keys['ArrowRight'] = false;
+    if (dx < -15) keys['ArrowLeft'] = true; else keys['ArrowLeft'] = false;
+  }, {passive:true});
+  canvas.addEventListener('touchend', () => { keys['ArrowLeft'] = false; keys['ArrowRight'] = false; });
+
+  function loop() {
+    if (!running) return;
+    requestAnimationFrame(loop);
+    if (paused) return;
+    update();
+    render();
+  }
+
+  function update() {
+    frame++;
+
+    // Steering
+    const steer = (keys['ArrowLeft']||keys['KeyA']) ? -1 : (keys['ArrowRight']||keys['KeyD']) ? 1 : 0;
+    playerX = Math.max(-1.8, Math.min(1.8, playerX + steer * 0.045));
+
+    // Speed
+    const topSpd = nitro ? MAX_SPEED * 1.25 : MAX_SPEED;
+    speed = Math.min(topSpd, speed + (nitro ? 0.12 : 0.04));
+    if (!steer) speed = Math.max(BASE_SPEED * 0.4, speed - 0.015);
+    if (nitro) { nitroTimer++; if (nitroTimer > 90) { nitro = false; nitroTimer = 0; } }
+
+    // Gear display
+    gearTimer++;
+    if (gearTimer > 30) {
+      const spd = Math.round(speed * 18);
+      gear = spd < 20 ? '1' : spd < 40 ? '2' : spd < 60 ? '3' : spd < 85 ? '4' : '5';
+      if (nitro) gear = 'N'; // NITRO
+    }
+
+    // Road curve
+    curveSeg++;
+    if (curveSeg > 180) {
+      curveTarget = (Math.random() - 0.5) * 0.018;
+      curveSeg = 0;
+    }
+    curve += (curveTarget - curve) * 0.012;
+
+    // Rain
+    if (IS_RAIN) {
+      rainDrops.forEach(d => {
+        d.y += 0.018 + speed * 0.004;
+        if (d.y > 1) { d.y = 0; d.x = Math.random(); }
+      });
+    }
+
+    // Trees (z from 0=horizon to 1=player)
+    trees.forEach(t => {
+      t.z += speed * 0.003;
+      if (t.z > 1) { t.z = 0; t.side = Math.random() > 0.5 ? 1 : -1; }
+    });
+
+    // Signs
+    signTimer--;
+    if (signTimer <= 0) {
+      signs.push({ z: 0, side: Math.random() > 0.5 ? 1 : -1, text: SIGN_TEXTS[Math.floor(Math.random()*SIGN_TEXTS.length)] });
+      signTimer = Math.floor(Math.random() * 100 + 60);
+    }
+    signs.forEach(s => { s.z += speed * 0.003; });
+    signs = signs.filter(s => s.z < 1.05);
+
+    distance += speed * 0.0003;
+
+    // HUD
+    document.getElementById('hud-speed').textContent = Math.round(speed * 18);
+    document.getElementById('hud-dist').textContent = distance.toFixed(1);
+    document.getElementById('hud-gear').textContent = nitro ? 'N' : gear;
+  }
+
+  function render() {
+    const W = VP_W, H = VP_H;
+    ctx.clearRect(0, 0, W, H);
+
+    // Sky
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, HORIZON);
+    if (IS_DAY) {
+      skyGrad.addColorStop(0, '#0a1a2a');
+      skyGrad.addColorStop(1, '#1a3550');
+    } else {
+      skyGrad.addColorStop(0, '#030508');
+      skyGrad.addColorStop(1, '#0a0f18');
+    }
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, HORIZON);
+
+    // Stars (night/rain)
+    if (!IS_DAY || IS_RAIN) {
+      ctx.fillStyle = 'rgba(200,220,255,0.5)';
+      for (let i = 0; i < 60; i++) {
+        const sx = (((i * 137.5) % 1) * W);
+        const sy = (((i * 97.3) % 1) * HORIZON * 0.9);
+        ctx.fillRect(sx, sy, 0.8, 0.8);
+      }
+    }
+
+    // Moon or sun
+    if (!IS_DAY) {
+      ctx.beginPath();
+      ctx.arc(W * 0.78, HORIZON * 0.3, 14, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(200,200,150,0.85)';
+      ctx.fill();
+    } else {
+      const sunGrad = ctx.createRadialGradient(W*0.75, HORIZON*0.25, 2, W*0.75, HORIZON*0.25, 22);
+      sunGrad.addColorStop(0, 'rgba(255,220,80,0.9)');
+      sunGrad.addColorStop(1, 'rgba(255,120,40,0)');
+      ctx.fillStyle = sunGrad;
+      ctx.beginPath();
+      ctx.arc(W*0.75, HORIZON*0.25, 22, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // Horizon glow
+    if (IS_DAY) {
+      const hGrad = ctx.createLinearGradient(0, HORIZON-18, 0, HORIZON+5);
+      hGrad.addColorStop(0, 'rgba(0,100,255,0)');
+      hGrad.addColorStop(1, 'rgba(0,200,255,0.18)');
+      ctx.fillStyle = hGrad;
+      ctx.fillRect(0, HORIZON-18, W, 23);
+    }
+
+    // Ground
+    const groundGrad = ctx.createLinearGradient(0, HORIZON, 0, H);
+    if (IS_DAY) {
+      groundGrad.addColorStop(0, '#0d1f0d');
+      groundGrad.addColorStop(1, '#060d06');
+    } else {
+      groundGrad.addColorStop(0, '#070c07');
+      groundGrad.addColorStop(1, '#030503');
+    }
+    ctx.fillStyle = groundGrad;
+    ctx.fillRect(0, HORIZON, W, H - HORIZON);
+
+    // Road projection
+    const roadW_near = W * 0.55, roadW_far = W * 0.07;
+    const cx = W / 2;
+
+    // Accumulated curve offset at various depths
+    function roadEdge(z) {
+      // z 0=horizon, 1=camera
+      const t = 1 - z; // t=0 far, t=1 near
+      const screenY = HORIZON + (H - HORIZON) * Math.pow(z, 0.85);
+      const halfW = roadW_far + (roadW_near - roadW_far) * Math.pow(z, 0.75);
+      const curvOff = curve * (1 - t) * W * 60;
+      const camOff = playerX * halfW * 0.45;
+      return { y: screenY, left: cx - halfW + curvOff - camOff, right: cx + halfW + curvOff - camOff, halfW };
+    }
+
+    const SEGS = 60;
+    // Road surface
+    ctx.beginPath();
+    const r0 = roadEdge(0); ctx.moveTo(r0.left, r0.y);
+    for (let i = 1; i <= SEGS; i++) { const r = roadEdge(i/SEGS); ctx.lineTo(r.left, r.y); }
+    const rN = roadEdge(1); ctx.lineTo(rN.right, rN.y);
+    for (let i = SEGS; i >= 0; i--) { const r = roadEdge(i/SEGS); ctx.lineTo(r.right, r.y); }
+    ctx.closePath();
+    ctx.fillStyle = IS_DAY ? '#1a2218' : '#0f1510';
+    ctx.fill();
+
+    // Road stripes
+    for (let i = 0; i < SEGS; i++) {
+      const z0 = i / SEGS, z1 = (i + 0.5) / SEGS;
+      const ra = roadEdge(z0), rb = roadEdge(z1);
+      const stripeIdx = (Math.floor(frame * speed * 0.05) + i) % 10;
+      if (stripeIdx < 5) {
+        ctx.beginPath();
+        ctx.moveTo((ra.left + ra.right)/2 - 2, ra.y);
+        ctx.lineTo((rb.left + rb.right)/2 - 2, rb.y);
+        ctx.lineTo((rb.left + rb.right)/2 + 2, rb.y);
+        ctx.lineTo((ra.left + ra.right)/2 + 2, ra.y);
+        ctx.closePath();
+        ctx.fillStyle = IS_DAY ? 'rgba(0,232,216,0.35)' : 'rgba(0,232,216,0.2)';
+        ctx.fill();
+      }
+    }
+
+    // Road edges
+    ctx.strokeStyle = IS_DAY ? 'rgba(0,232,216,0.6)' : 'rgba(0,232,216,0.35)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let i = 0; i <= SEGS; i++) { const r = roadEdge(i/SEGS); i===0 ? ctx.moveTo(r.left,r.y) : ctx.lineTo(r.left,r.y); }
+    ctx.stroke();
+    ctx.beginPath();
+    for (let i = 0; i <= SEGS; i++) { const r = roadEdge(i/SEGS); i===0 ? ctx.moveTo(r.right,r.y) : ctx.lineTo(r.right,r.y); }
+    ctx.stroke();
+
+    // Trees
+    trees.forEach(t => {
+      const r = roadEdge(1 - t.z);
+      const scale = Math.pow(t.z, 0.8);
+      const tx = t.side < 0 ? r.left - r.halfW * 0.35 * scale : r.right + r.halfW * 0.35 * scale;
+      const ty = r.y;
+      const th = 28 * scale, tw = 14 * scale;
+      if (scale < 0.03) return;
+      // trunk
+      ctx.fillStyle = '#1a0f00';
+      ctx.fillRect(tx - tw*0.1, ty - th*0.25, tw*0.2, th*0.25);
+      // canopy
+      ctx.fillStyle = IS_DAY ? '#0a2a0a' : '#050f05';
+      ctx.beginPath();
+      ctx.moveTo(tx, ty - th);
+      ctx.lineTo(tx - tw/2, ty - th*0.25);
+      ctx.lineTo(tx + tw/2, ty - th*0.25);
+      ctx.closePath();
+      ctx.fill();
+    });
+
+    // Road signs
+    signs.forEach(s => {
+      const r = roadEdge(1 - s.z);
+      const scale = Math.pow(s.z, 0.75);
+      if (scale < 0.06) return;
+      const sx = s.side < 0 ? r.left - r.halfW * 0.7 * scale : r.right + r.halfW * 0.7 * scale;
+      const sy = r.y - 20 * scale;
+      const sw = 48 * scale, sh = 16 * scale;
+      ctx.strokeStyle = 'rgba(0,232,216,0.7)';
+      ctx.lineWidth = Math.max(0.5, scale);
+      ctx.strokeRect(sx - sw/2, sy - sh, sw, sh);
+      if (scale > 0.25) {
+        ctx.fillStyle = 'rgba(0,232,216,' + Math.min(1, scale * 1.5) + ')';
+        ctx.font = Math.max(5, Math.round(7 * scale)) + 'px "Share Tech Mono"';
+        ctx.textAlign = 'center';
+        ctx.fillText(s.text, sx, sy - sh * 0.3);
+      }
+    });
+
+    // ASCII car
+    const carLines = [
+      '    ______   ',
+      '  /|_||_\\`. ',
+      ' (   _    _  )',
+      "=`-(_)--(_)-'",
+    ];
+    const charW = Math.max(6, W * 0.013);
+    const lineH = charW * 1.5;
+    const totalW = carLines[3].length * charW * 0.6;
+    const carX = W / 2 - totalW / 2 + playerX * W * 0.08;
+
+    // Glow under car
+    if (nitro) {
+      const nitroGrad = ctx.createRadialGradient(W/2 + playerX*W*0.08, VAN_Y + 8, 0, W/2 + playerX*W*0.08, VAN_Y + 8, 40);
+      nitroGrad.addColorStop(0, 'rgba(0,232,216,0.5)');
+      nitroGrad.addColorStop(1, 'rgba(0,232,216,0)');
+      ctx.fillStyle = nitroGrad;
+      ctx.fillRect(W/2 + playerX*W*0.08 - 50, VAN_Y - 5, 100, 50);
+    }
+
+    const headlight = IS_DAY ? 'rgba(0,232,216,0.8)' : 'rgba(0,232,216,1.0)';
+    ctx.font = charW + 'px "Share Tech Mono"';
+    ctx.textAlign = 'left';
+    carLines.forEach((line, i) => {
+      ctx.fillStyle = i < 2 ? headlight : (IS_DAY ? 'rgba(0,200,180,0.9)' : 'rgba(0,180,160,0.9)');
+      if (!IS_DAY || nitro) ctx.shadowColor = 'rgba(0,232,216,0.6)';
+      ctx.shadowBlur = nitro ? 18 : 6;
+      ctx.fillText(line, carX, VAN_Y + (i - carLines.length) * lineH + lineH);
+    });
+    ctx.shadowBlur = 0;
+
+    // Headlight beams at night
+    if (!IS_DAY) {
+      const bx = W/2 + playerX*W*0.08;
+      const by = VAN_Y - carLines.length * lineH;
+      const beamGrad = ctx.createLinearGradient(bx, by, bx + curve * W * 8, HORIZON + 15);
+      beamGrad.addColorStop(0, 'rgba(0,232,216,0.08)');
+      beamGrad.addColorStop(1, 'rgba(0,232,216,0)');
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(bx - 18, by);
+      ctx.lineTo(bx + curve * W * 8 - 60, HORIZON + 15);
+      ctx.lineTo(bx + curve * W * 8 + 60, HORIZON + 15);
+      ctx.lineTo(bx + 18, by);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Rain
+    if (IS_RAIN) {
+      ctx.strokeStyle = 'rgba(150,200,255,0.35)';
+      ctx.lineWidth = 0.8;
+      rainDrops.forEach(d => {
+        ctx.beginPath();
+        ctx.moveTo(d.x * W, d.y * H);
+        ctx.lineTo(d.x * W + 2, d.y * H + d.len);
+        ctx.stroke();
+      });
+    }
+
+    // NITRO flash overlay
+    if (nitro && frame % 4 < 2) {
+      ctx.fillStyle = 'rgba(0,232,216,0.04)';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Scanline
+    for (let y = 0; y < H; y += 4) {
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, y, W, 2);
+    }
+  }
+}
+
+function showDriveOverlay() {
+  const overlay = document.getElementById('drive-overlay');
+  if (overlay) overlay.style.display = 'flex';
+}
+
+});
+
+</script>
+</body>
+</html>
