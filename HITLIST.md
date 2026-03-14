@@ -45,6 +45,12 @@ Active task list. When all items are complete, archive this file as `archive/HIT
 
 ---
 
+## Wells Fargo Integration
+- [x] WF checking balance field — sets authoritative "funds on hand" in header
+- [x] WF CSV import with date range filter
+- [x] Auto-category mapping (food, gas, entertainment, gym, necessities, repairs, travel, paycheck)
+- [x] Duplicate detection by date + amount + description
+
 ## Sync
 - [x] GitHub Gist sync for nomad.html (PAT + push/pull + merge by entry ID)
 - [x] GitHub Gist sync for budget.html (PAT + push/pull + merge by transaction ID)

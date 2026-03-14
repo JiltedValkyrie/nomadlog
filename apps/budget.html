@@ -1010,6 +1010,45 @@ label {
       </div>
       <div id="import-status" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-top:0.65rem;color:var(--text-dim);"></div>
     </div>
+
+    <div class="card">
+      <div class="modal-title">WELLS FARGO IMPORT</div>
+      <div style="background:rgba(0,232,216,0.04);border:1px solid rgba(0,232,216,0.12);border-radius:2px;padding:0.7rem 0.9rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem;">
+        <span style="color:var(--vfd-cyan);">// HOW TO EXPORT FROM WELLS FARGO</span><br>
+        wellsfargo.com → Account Activity → <strong style="color:var(--text);">Download Account Activity</strong><br>
+        Format: <strong style="color:var(--text);">Comma-Separated Values (CSV)</strong> · pick your date range → Download
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Current Checking Balance ($)</label>
+          <input type="number" id="wf-balance" step="0.01" placeholder="e.g. 847.32">
+        </div>
+        <div class="field">
+          <label>Balance As Of</label>
+          <input type="date" id="wf-balance-date">
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:0;margin-bottom:1rem;">
+        <button class="btn btn-cyan" id="wf-balance-save">SET AS FUNDS ON HAND</button>
+        <button class="btn btn-ghost" id="wf-balance-clear">CLEAR</button>
+      </div>
+      <div id="wf-balance-status" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-bottom:1rem;color:var(--text-dim);"></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Import From Date</label>
+          <input type="date" id="wf-from">
+        </div>
+        <div class="field">
+          <label>Import To Date</label>
+          <input type="date" id="wf-to">
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:0;">
+        <label class="import-label" for="wf-csv-file">SELECT WF CSV</label>
+        <input type="file" id="wf-csv-file" accept=".csv" style="display:none;">
+      </div>
+      <div id="wf-import-status" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-top:0.75rem;color:var(--text-dim);line-height:1.8;white-space:pre-line;"></div>
+    </div>
     <div class="card">
       <div class="modal-title">GITHUB GIST SYNC</div>
       <div style="background:rgba(0,232,216,0.04);border:1px solid rgba(0,232,216,0.15);border-radius:2px;padding:0.7rem 0.9rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem;">
@@ -1115,6 +1154,8 @@ let state = JSON.parse(localStorage.getItem('leopard_budget') || 'null') || {
   carFund: 0,
   emergency: 0,
   reserve: 0,
+  wfBalance: null,
+  wfBalanceDate: null,
   retConfig: {
     startBalance: 71433.78,
     annualContrib: 18750,
@@ -1221,7 +1262,7 @@ $('.nav-btn').on('click', function() {
   if (p === 'history') renderHistory();
   if (p === 'carfund') renderCarFund();
   if (p === 'budget') renderBudgetPanel();
-  if (p === 'settings') renderSettings();
+  if (p === 'settings') { renderSettings(); renderWfFields(); }
   if (p === 'drive') initDrive();
 });
 
@@ -1466,6 +1507,139 @@ function setBGistSt(msg, type) {
   $('#b-gist-status').text(msg).css('color', col);
 }
 
+// ── WELLS FARGO IMPORT ────────────────────────────────────────────────────────
+
+// Populate balance fields from state on settings open
+function renderWfFields() {
+  if (state.wfBalance != null) $('#wf-balance').val(state.wfBalance.toFixed(2));
+  if (state.wfBalanceDate)     $('#wf-balance-date').val(state.wfBalanceDate);
+  const status = state.wfBalance != null
+    ? '⌖ Current funds on hand: ' + fmtMoney(state.wfBalance) + (state.wfBalanceDate ? ' (as of ' + state.wfBalanceDate + ')' : '')
+    : '';
+  $('#wf-balance-status').text(status).css('color', 'var(--vfd-cyan)');
+  // default date range: last 30 days
+  if (!$('#wf-from').val()) $('#wf-from').val(new Date(Date.now()-30*864e5).toISOString().split('T')[0]);
+  if (!$('#wf-to').val())   $('#wf-to').val(today());
+}
+
+$('#btn-save-cfg').on('click', renderWfFields); // refresh when settings are saved
+
+$('#wf-balance-save').on('click', function() {
+  const bal = parseFloat($('#wf-balance').val());
+  const dt  = $('#wf-balance-date').val() || today();
+  if (isNaN(bal)) { $('#wf-balance-status').text('✗ Enter a valid amount').css('color','var(--red)'); return; }
+  state.wfBalance = bal;
+  state.wfBalanceDate = dt;
+  save(); renderHeader();
+  $('#wf-balance-status').text('✓ Funds on hand set to ' + fmtMoney(bal) + ' as of ' + dt).css('color','var(--vfd-cyan)');
+  toast('BALANCE UPDATED');
+});
+
+$('#wf-balance-clear').on('click', function() {
+  state.wfBalance = null; state.wfBalanceDate = null;
+  save(); renderHeader();
+  $('#wf-balance').val(''); $('#wf-balance-date').val('');
+  $('#wf-balance-status').text('Balance cleared — using calculated balance').css('color','var(--text-dim)');
+});
+
+// WF CSV category mapping
+const WF_CAT_MAP = [
+  { cat: 'food',          patterns: ['WALMART','KROGER','PUBLIX','ALDI','WHOLE FOODS','TRADER JOE','SAFEWAY','MEIJER','HEB','FOOD LION','GIANT','WINN DIXIE','SPROUTS','LIDL','PIGGLY','INGLES','HARRIS TEETER','CHICK-FIL','MCDONALD','BURGER KING','WENDY','TACO BELL','SUBWAY','CHIPOTLE','DOMINO','PIZZA','PANERA','STARBUCKS','DUNKIN','WAFFLE HOUSE','CRACKER BARREL','IHOP','DENNY','APPLEBEE','OLIVE GARDEN','OUTBACK','BOJANGLES','ZAXBY','COOKOUT','SHEETZ FOOD','WAWA FOOD','DOORDASH','GRUBHUB','UBEREATS','INSTACART'] },
+  { cat: 'gas',           patterns: ['SHELL','CHEVRON','EXXON','BP ','CIRCLE K','MURPHY','SUNOCO','SPEEDWAY','MARATHON','PILOT','LOVE\'S','TA PETRO','FLYING J','RACETRAC','QUIKTRIP','SHEETZ','WAWA','GAS STATION','FUEL','BLINK CHARGING','ELECTRIFY'] },
+  { cat: 'entertainment', patterns: ['NETFLIX','HULU','DISNEY','SPOTIFY','APPLE.COM','GOOGLE PLAY','STEAM','PLAYSTATION','XBOX','AMAZON PRIME','AMAZON VIDEO','PATREON','YOUTUBE','TWITCH','CRUNCHYROLL','FUNIMATION','PARAMOUNT','PEACOCK','HBO','SHOWTIME','AMC THEATRE','REGAL','CINEMA'] },
+  { cat: 'gym',           patterns: ['PLANET FITNESS','YMCA','GOLD\'S GYM','ANYTIME FITNESS','CRUNCH','LA FITNESS','24 HOUR FITNESS','EQUINOX'] },
+  { cat: 'necessities',   patterns: ['CVS','WALGREENS','RITE AID','DOLLAR GENERAL','DOLLAR TREE','FAMILY DOLLAR','TARGET','ROSS','BURLINGTON','GOODWILL','AUTOZONE','O\'REILLY','ADVANCE AUTO','NAPA AUTO','HARBOR FREIGHT','HOME DEPOT','LOWE\'S','MENARDS','ACE HARDWARE','LAUNDRY','LAUNDROMAT','WASH','COINMACH','CSC SERVICEWORKS'] },
+  { cat: 'repairs',       patterns: ['JIFFY LUBE','FIRESTONE','PEP BOYS','MIDAS','MONRO','MAVIS','NTB ','GOODYEAR','VALVOLINE','DEALERSHIP','AUTO REPAIR','MECHANIC','BODY SHOP','TOWING','AAA '] },
+  { cat: 'travel',        patterns: ['AIRBNB','VRBO','HOTEL','MOTEL','INN ','MARRIOTT','HILTON','HOLIDAY INN','BEST WESTERN','SUPER 8','DAYS INN','COMFORT INN','HAMPTON INN','EXPEDIA','BOOKING.COM','PRICELINE','HOTWIRE','NATIONAL PARK','STATE PARK','KOA','CAMPSITE'] },
+  { cat: 'paycheck',      patterns: ['DIRECT DEP','DIRECT DEPOSIT','PAYROLL','ADP ','PAYCHEX','GUSTO','ZELLE FROM','VENMO FROM','CASHAPP FROM'] },
+];
+
+function wfGuessCategory(desc) {
+  const u = desc.toUpperCase();
+  for (const rule of WF_CAT_MAP) {
+    if (rule.patterns.some(p => u.includes(p))) return rule.cat;
+  }
+  return 'other';
+}
+
+$('#wf-csv-file').on('change', function() {
+  const file = this.files[0]; if (!file) return;
+  const fromDate = $('#wf-from').val();
+  const toDate   = $('#wf-to').val();
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const lines = ev.target.result.split(/\r?\n/).filter(l => l.trim());
+      let imported = 0, skipped = 0, outOfRange = 0;
+      const catTally = {};
+
+      // Build a dedup set from existing transactions: "date|amount|desc"
+      const existing = new Set(state.transactions.map(t => t.wfKey).filter(Boolean));
+
+      lines.forEach(line => {
+        // WF CSV: "Date","Amount","*","*","Description"
+        // Some exports have no header; some start with "Date". Skip header row.
+        const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g);
+        if (!cols || cols.length < 5) return;
+        const clean = cols.map(c => c.replace(/^"|"$/g,'').trim());
+        if (clean[0].toLowerCase() === 'date') return; // header row
+
+        const rawDate = clean[0];   // MM/DD/YYYY
+        const rawAmt  = parseFloat(clean[1]);
+        const desc    = clean[4] || clean[3] || '';
+
+        if (isNaN(rawAmt) || !rawDate) return;
+
+        // Parse date MM/DD/YYYY → YYYY-MM-DD
+        const parts = rawDate.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+        if (!parts) return;
+        const isoDate = parts[3] + '-' + parts[1].padStart(2,'0') + '-' + parts[2].padStart(2,'0');
+
+        // Date range filter
+        if (fromDate && isoDate < fromDate) { outOfRange++; return; }
+        if (toDate   && isoDate > toDate)   { outOfRange++; return; }
+
+        // WF: negative = debit (you paid), positive = credit (income)
+        // App convention: positive = spend, negative = income
+        const appAmt = -rawAmt;
+        const cat    = wfGuessCategory(desc);
+        const wfKey  = isoDate + '|' + rawAmt.toFixed(2) + '|' + desc.substring(0,40);
+
+        if (existing.has(wfKey)) { skipped++; return; }
+
+        state.transactions.push({
+          id: Date.now() + Math.random(),
+          date: isoDate,
+          cat: cat === 'paycheck' ? 'paycheck' : cat,
+          desc: desc.substring(0, 60),
+          amount: appAmt,
+          wfKey: wfKey
+        });
+        existing.add(wfKey);
+        catTally[cat] = (catTally[cat] || 0) + 1;
+        imported++;
+      });
+
+      state.transactions.sort((a,b) => b.id - a.id);
+      save(); renderAll();
+
+      const tallyStr = Object.entries(catTally)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([c,n]) => '  ' + (CAT_LABELS[c]||c).padEnd(14) + n + ' tx')
+        .join('\n');
+
+      $('#wf-import-status')
+        .text('✓ Imported: ' + imported + ' transactions\n  Skipped (duplicates): ' + skipped + '\n  Out of range: ' + outOfRange + '\n\nCategories:\n' + tallyStr)
+        .css('color','var(--vfd-cyan)');
+      toast('WF IMPORTED ' + imported);
+    } catch(e) {
+      $('#wf-import-status').text('✗ Parse error: ' + e.message).css('color','var(--red)');
+    }
+    $(this).val('');
+  };
+  reader.readAsText(file);
+});
+
 // ── RENDER: ALL ───────────────────────────────────────────────────────────────
 function renderAll() {
   renderHeader();
@@ -1474,8 +1648,14 @@ function renderAll() {
 
 // ── RENDER: HEADER ────────────────────────────────────────────────────────────
 function renderHeader() {
-  const balance = PAYCHECK_AMT * state.paychecks.length - totalSpent();
-  $('#hdr-balance').text(fmtMoney(Math.max(0, balance)));
+  const balance = state.wfBalance != null
+    ? state.wfBalance
+    : Math.max(0, PAYCHECK_AMT * state.paychecks.length - totalSpent());
+  $('#hdr-balance').text(fmtMoney(balance));
+  if (state.wfBalance != null && state.wfBalanceDate) {
+    const d = new Date(state.wfBalanceDate + 'T12:00:00');
+    $('#hdr-balance').attr('title', 'WF balance as of ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));
+  }
   $('#hdr-carfund').text(fmtMoney(state.carFund));
   const days = daysUntilNextPay();
   const np = nextPayday();
