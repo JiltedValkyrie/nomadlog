@@ -1011,6 +1011,30 @@ label {
       <div id="import-status" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-top:0.65rem;color:var(--text-dim);"></div>
     </div>
     <div class="card">
+      <div class="modal-title">GITHUB GIST SYNC</div>
+      <div style="background:rgba(0,232,216,0.04);border:1px solid rgba(0,232,216,0.15);border-radius:2px;padding:0.7rem 0.9rem;font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);line-height:1.8;margin-bottom:1rem;">
+        <span style="color:var(--vfd-cyan);">// CROSS-DEVICE SYNC</span> — Saves budget state to a private GitHub Gist.<br>
+        Requires a GitHub <span style="color:var(--vfd-cyan);">Personal Access Token</span> with <span style="color:var(--vfd-cyan);">gist</span> scope.<br>
+        Create: <span style="color:var(--text);">github.com → Settings → Developer settings → Personal access tokens → Fine-grained → New token → Gist: Read &amp; Write</span>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Personal Access Token</label>
+          <input type="password" id="b-gist-pat" placeholder="github_pat_..." autocomplete="off">
+        </div>
+        <div class="field">
+          <label>Gist ID <span style="font-size:0.58rem;color:var(--text-dim);">(auto after first push)</span></label>
+          <input type="text" id="b-gist-id" placeholder="Leave blank to create new">
+        </div>
+      </div>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn btn-ghost" id="b-gist-pat-save">SAVE TOKEN</button>
+        <button class="btn btn-cyan" id="b-gist-push">↑ PUSH</button>
+        <button class="btn btn-ghost" id="b-gist-pull">↓ PULL</button>
+      </div>
+      <div id="b-gist-status" style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;margin-top:0.75rem;color:var(--text-dim);line-height:1.8;white-space:pre-line;"></div>
+    </div>
+    <div class="card">
       <div class="modal-title">ABOUT</div>
       <div style="font-family:'Share Tech Mono',monospace;font-size:0.65rem;color:var(--text-dim);line-height:2;">
         Paycheck: <span style="color:var(--vfd-cyan);">$1,600.00 biweekly (post-tax, post-401k)</span><br>
@@ -1350,6 +1374,97 @@ $('#btn-nuke').on('click', function() {
   state = { transactions:[], paychecks:[], subs: state.subs, carFund:0, emergency:0, reserve:0, retConfig: state.retConfig };
   save(); renderAll(); toast('CLEARED');
 });
+
+// ── GIST SYNC ─────────────────────────────────────────────────────────────────
+const B_GIST_FILE = 'leopard_budget.json';
+
+(function initBGistFields() {
+  const pat = localStorage.getItem('leopard_gist_pat') || '';
+  const id  = localStorage.getItem('leopard_gist_id')  || '';
+  if (pat) $('#b-gist-pat').val(pat);
+  if (id)  $('#b-gist-id').val(id);
+})();
+
+$('#b-gist-pat-save').on('click', function() {
+  const pat = $('#b-gist-pat').val().trim();
+  if (!pat) { setBGistSt('✗ Token is empty', 'danger'); return; }
+  localStorage.setItem('leopard_gist_pat', pat);
+  setBGistSt('✓ Token saved locally', 'ok');
+});
+
+$('#b-gist-id').on('change', function() {
+  const id = $(this).val().trim();
+  if (id) localStorage.setItem('leopard_gist_id', id);
+});
+
+$('#b-gist-push').on('click', function() {
+  const pat = localStorage.getItem('leopard_gist_pat') || '';
+  const id  = $('#b-gist-id').val().trim() || localStorage.getItem('leopard_gist_id') || '';
+  if (!pat) { setBGistSt('✗ No token — save a GitHub PAT first', 'danger'); return; }
+  setBGistSt('Pushing…', '');
+  const body = JSON.stringify({
+    description: 'LEOPARD FINANCE sync',
+    public: false,
+    files: { [B_GIST_FILE]: { content: JSON.stringify(state, null, 2) } }
+  });
+  if (id) {
+    $.ajax({
+      url: 'https://api.github.com/gists/' + id,
+      method: 'PATCH',
+      headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      contentType: 'application/json', data: body,
+      success: r => setBGistSt('✓ Pushed\n⌖ ' + r.html_url, 'ok'),
+      error: x => setBGistSt('✗ Push failed: ' + (x.responseJSON && x.responseJSON.message || x.status), 'danger')
+    });
+  } else {
+    $.ajax({
+      url: 'https://api.github.com/gists',
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      contentType: 'application/json', data: body,
+      success: function(r) {
+        localStorage.setItem('leopard_gist_id', r.id);
+        $('#b-gist-id').val(r.id);
+        setBGistSt('✓ Gist created & pushed\n⌖ ' + r.html_url + '\nID saved — future pushes update this Gist.', 'ok');
+      },
+      error: x => setBGistSt('✗ Create failed: ' + (x.responseJSON && x.responseJSON.message || x.status), 'danger')
+    });
+  }
+});
+
+$('#b-gist-pull').on('click', function() {
+  const pat = localStorage.getItem('leopard_gist_pat') || '';
+  const id  = $('#b-gist-id').val().trim() || localStorage.getItem('leopard_gist_id') || '';
+  if (!pat) { setBGistSt('✗ No token — save a GitHub PAT first', 'danger'); return; }
+  if (!id)  { setBGistSt('✗ No Gist ID — push first or paste an existing ID', 'danger'); return; }
+  setBGistSt('Pulling…', '');
+  $.ajax({
+    url: 'https://api.github.com/gists/' + id,
+    method: 'GET',
+    headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    success: function(r) {
+      const file = r.files[B_GIST_FILE];
+      if (!file) { setBGistSt('✗ File "' + B_GIST_FILE + '" not found in Gist', 'danger'); return; }
+      let remote;
+      try { remote = JSON.parse(file.content); } catch(e) { setBGistSt('✗ Invalid JSON in Gist', 'danger'); return; }
+      if (!remote.transactions) { setBGistSt('✗ Unexpected format in Gist', 'danger'); return; }
+      // Merge transactions by id (remote wins on conflict), keep all local-only
+      const remoteIds = new Set(remote.transactions.map(t => t.id));
+      const localOnly = state.transactions.filter(t => !remoteIds.has(t.id));
+      remote.transactions = [...remote.transactions, ...localOnly].sort((a,b) => b.id - a.id);
+      state = remote;
+      save(); renderAll();
+      setBGistSt('✓ Pulled & merged\n  Total transactions: ' + state.transactions.length, 'ok');
+      toast('SYNCED');
+    },
+    error: x => setBGistSt('✗ Pull failed: ' + (x.responseJSON && x.responseJSON.message || x.status), 'danger')
+  });
+});
+
+function setBGistSt(msg, type) {
+  const col = type === 'ok' ? 'var(--vfd-cyan)' : type === 'danger' ? 'var(--red)' : 'var(--text-dim)';
+  $('#b-gist-status').text(msg).css('color', col);
+}
 
 // ── RENDER: ALL ───────────────────────────────────────────────────────────────
 function renderAll() {

@@ -419,6 +419,34 @@
       </div>
       <div id="import-status"></div>
     </div>
+
+    <div class="card">
+      <div class="section-label">GitHub Gist Sync</div>
+      <div class="notice" style="margin-bottom:1rem;">
+        <strong>// CROSS-DEVICE SYNC</strong> — Saves your log to a private GitHub Gist.
+        Merge is by entry ID — no data lost on either side. Needs a GitHub
+        <strong>Personal Access Token</strong> with <strong>gist</strong> scope.
+        <br><br>
+        Create one at: <strong>github.com → Settings → Developer settings → Personal access tokens → Fine-grained → New token</strong>
+        — enable <strong>Gist: Read and Write</strong>.
+      </div>
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <div style="display:flex;gap:0.6rem;">
+          <input type="password" id="gist-pat" placeholder="github_pat_..." autocomplete="off" style="flex:1;">
+          <button class="btn btn-ghost" id="gist-pat-save">SAVE TOKEN</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Gist ID <span style="font-size:0.6rem;color:var(--text-dim);">(auto-filled after first push)</span></label>
+        <input type="text" id="gist-id" placeholder="Leave blank to create a new Gist on first push" autocomplete="off">
+      </div>
+      <div class="btn-row" style="margin-top:0;">
+        <button class="btn btn-primary" id="gist-push">↑ PUSH TO GIST</button>
+        <button class="btn btn-ghost" id="gist-pull">↓ PULL FROM GIST</button>
+      </div>
+      <div id="gist-status" style="font-family:'Share Tech Mono',monospace;font-size:0.67rem;margin-top:0.75rem;color:var(--text-dim);line-height:1.8;"></div>
+    </div>
   </div>
 
 </div>
@@ -947,6 +975,116 @@ $(function() {
     if (!confirm('Permanently delete ALL entries?')) return;
     entries = []; save(); renderJournal(); renderStats(); toast('CLEARED');
   });
+
+  // ── GIST SYNC ─────────────────────────────────────────────────────────────────
+  const GIST_FILENAME = 'nomadlog_entries.json';
+
+  function gistPat()  { return localStorage.getItem('nomadlog_gist_pat') || ''; }
+  function gistId()   { return $('#gist-id').val().trim() || localStorage.getItem('nomadlog_gist_id') || ''; }
+
+  // Populate fields from storage on load
+  (function initGistFields() {
+    const pat = gistPat();
+    if (pat) $('#gist-pat').val(pat);
+    const id = localStorage.getItem('nomadlog_gist_id') || '';
+    if (id) $('#gist-id').val(id);
+  })();
+
+  $('#gist-pat-save').on('click', function() {
+    const pat = $('#gist-pat').val().trim();
+    if (!pat) { setGistSt('✗ Token is empty', 'danger'); return; }
+    localStorage.setItem('nomadlog_gist_pat', pat);
+    setGistSt('✓ Token saved locally', 'ok');
+  });
+
+  $('#gist-id').on('change', function() {
+    const id = $(this).val().trim();
+    if (id) localStorage.setItem('nomadlog_gist_id', id);
+  });
+
+  $('#gist-push').on('click', function() {
+    const pat = gistPat();
+    if (!pat) { setGistSt('✗ No token — save a GitHub PAT first', 'danger'); return; }
+    setGistSt('Pushing…', '');
+    const id = gistId();
+    const body = JSON.stringify({
+      description: 'NOMAD LOG sync',
+      public: false,
+      files: { [GIST_FILENAME]: { content: JSON.stringify(entries, null, 2) } }
+    });
+    if (id) {
+      // Update existing gist
+      $.ajax({
+        url: 'https://api.github.com/gists/' + id,
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+        contentType: 'application/json',
+        data: body,
+        success: function(r) {
+          setGistSt('✓ Pushed ' + entries.length + ' entries\n⌖ Gist: ' + r.html_url, 'ok');
+        },
+        error: function(x) { setGistSt('✗ Push failed: ' + (x.responseJSON && x.responseJSON.message || x.status), 'danger'); }
+      });
+    } else {
+      // Create new gist
+      $.ajax({
+        url: 'https://api.github.com/gists',
+        method: 'POST',
+        headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+        contentType: 'application/json',
+        data: body,
+        success: function(r) {
+          localStorage.setItem('nomadlog_gist_id', r.id);
+          $('#gist-id').val(r.id);
+          setGistSt('✓ Gist created & pushed ' + entries.length + ' entries\n⌖ ' + r.html_url + '\nGist ID saved — future pushes will update this Gist.', 'ok');
+        },
+        error: function(x) { setGistSt('✗ Create failed: ' + (x.responseJSON && x.responseJSON.message || x.status), 'danger'); }
+      });
+    }
+  });
+
+  $('#gist-pull').on('click', function() {
+    const pat = gistPat();
+    const id = gistId();
+    if (!pat) { setGistSt('✗ No token — save a GitHub PAT first', 'danger'); return; }
+    if (!id)  { setGistSt('✗ No Gist ID — push first to create one, or paste an existing ID', 'danger'); return; }
+    setGistSt('Pulling…', '');
+    $.ajax({
+      url: 'https://api.github.com/gists/' + id,
+      method: 'GET',
+      headers: { Authorization: 'Bearer ' + pat, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+      success: function(r) {
+        const file = r.files[GIST_FILENAME];
+        if (!file) { setGistSt('✗ File "' + GIST_FILENAME + '" not found in Gist', 'danger'); return; }
+        let remote;
+        try { remote = JSON.parse(file.content); } catch(e) { setGistSt('✗ Invalid JSON in Gist', 'danger'); return; }
+        if (!Array.isArray(remote)) { setGistSt('✗ Unexpected format in Gist', 'danger'); return; }
+        // Merge: union by id, remote wins on conflict
+        const localIds  = new Set(entries.map(e => e.id));
+        const remoteIds = new Set(remote.map(e => e.id));
+        const newFromRemote  = remote.filter(e => !localIds.has(e.id)).length;
+        const newFromLocal   = entries.filter(e => !remoteIds.has(e.id)).length;
+        // Build merged: start with remote, add local entries not in remote
+        const merged = [...remote, ...entries.filter(e => !remoteIds.has(e.id))];
+        merged.sort((a,b) => b.id - a.id);
+        entries = merged;
+        save(); renderJournal(); renderStats();
+        setGistSt(
+          '✓ Merged — ' + merged.length + ' total entries\n' +
+          '  + ' + newFromRemote + ' new from Gist\n' +
+          '  + ' + newFromLocal + ' kept from local',
+          'ok'
+        );
+        toast('SYNCED');
+      },
+      error: function(x) { setGistSt('✗ Pull failed: ' + (x.responseJSON && x.responseJSON.message || x.status), 'danger'); }
+    });
+  });
+
+  function setGistSt(msg, type) {
+    const col = type === 'ok' ? 'var(--accent)' : type === 'danger' ? 'var(--danger)' : 'var(--text-dim)';
+    $('#gist-status').text(msg).css('color', col);
+  }
 
   // ── EDIT ENTRY ────────────────────────────────────────────────────────────────
   const ALL_POS = ['quiet','dark','safe feeling','good airflow','no foot traffic','no car traffic','near bathroom','level ground','good wifi nearby','cell signal','slept well','cat settled','good solar spot','low scrutiny','would return','near water','scenic','dispersed camping'];

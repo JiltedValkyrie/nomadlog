@@ -45,6 +45,10 @@ Active task list. When all items are complete, archive this file as `archive/HIT
 
 ---
 
+## Sync
+- [x] GitHub Gist sync for nomad.html (PAT + push/pull + merge by entry ID)
+- [x] GitHub Gist sync for budget.html (PAT + push/pull + merge by transaction ID)
+
 ## Docs / Meta
 - [x] README.md created
 - [x] CHANGELOG.md created
