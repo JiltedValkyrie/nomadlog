@@ -1647,9 +1647,17 @@ function renderAll() {
 }
 
 // ── RENDER: HEADER ────────────────────────────────────────────────────────────
+function deltaAfterSnapshot() {
+  if (!state.wfBalanceDate) return 0;
+  const cutoff = state.wfBalanceDate;
+  return state.transactions
+    .filter(t => t.date > cutoff && t.cat !== 'carfund' && t.cat !== 'emergency')
+    .reduce((s, t) => s - t.amount, 0); // negative amounts = income (paychecks), positive = spending
+}
+
 function renderHeader() {
   const balance = state.wfBalance != null
-    ? state.wfBalance
+    ? state.wfBalance + deltaAfterSnapshot()
     : Math.max(0, PAYCHECK_AMT * state.paychecks.length - totalSpent());
   $('#hdr-balance').text(fmtMoney(balance));
   if (state.wfBalance != null && state.wfBalanceDate) {
