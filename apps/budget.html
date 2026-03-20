@@ -1894,7 +1894,7 @@ function renderHistory() {
   const search = ($('#hist-search').val()||'').toLowerCase();
   const catFilter = $('#hist-cat-filter').val();
 
-  let txs = [...state.transactions].reverse().filter(t => {
+  let txs = [...state.transactions].sort((a,b) => b.date.localeCompare(a.date) || b.id - a.id).filter(t => {
     const ms = !search || t.desc.toLowerCase().includes(search) || (t.subcat||'').toLowerCase().includes(search);
     const mc = !catFilter || t.cat === catFilter;
     return ms && mc;
